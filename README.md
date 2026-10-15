@@ -1,6 +1,8 @@
 # Introduction to Data Structures
 
-A free, self-paced course on the five foundational data structures: stacks, queues, singly linked lists, binary search trees and hash tables. It starts with a short primer on Big-O, and each lesson pairs the theory with interactive animations and hands-on practice.
+A **self-paced online course, completely free**, covering the basic data structures every software developer should know and understand: stacks, queues, singly linked lists, binary search trees and hash tables. It starts with a short primer on Big-O, and each lesson pairs the essential theory with interactive animations and hands-on practice.
+
+**The certificate is free too.** No sign-up and no fees: pass the final quiz and get a certificate with your name.
 
 **Take the course:** https://ibrahimsobh.github.io/introduction-to-data-structures/
 
