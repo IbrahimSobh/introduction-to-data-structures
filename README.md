@@ -8,6 +8,17 @@ A **self-paced online course, completely free**, covering the basic data structu
 
 [![Course path: Big-O primer, five lessons (stack, queue, linked list, binary search tree, hash table), final quiz, then your certificate](images/course-overview.png)](https://ibrahimsobh.github.io/introduction-to-data-structures/)
 
+## What each lesson gives you
+
+- **A clear description** of how the structure works and where it's used in real software.
+- **Figures** that show the shape of the structure: nodes, pointers, stacks, trees and buckets.
+- **Real source code** in Python for every operation.
+- **Interactive animations** that link the two: run an operation and watch the figure change while the exact line of code that does it is highlighted.
+
+**Example: appending to a linked list.** The pointer `cur` walks along the chain in the figure, while line 23 `cur = cur.next` lights up in the code beside it, and a note explains each step.
+
+[![Linked list lesson: the figure shows the chain 10, 20, 30, 40 with the cur pointer on node 30, next to the Python append code with the line cur = cur.next highlighted](images/linked-list-lesson.png)](https://ibrahimsobh.github.io/introduction-to-data-structures/#sll)
+
 **How long it takes:** about 3–4 hours if you're new to programming, or 1.5–2 hours if you already program.
 
 | Part | New to programming | Already program |
