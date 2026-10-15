@@ -4,7 +4,9 @@ A **self-paced online course, completely free**, covering the basic data structu
 
 **The certificate is free too.** No sign-up and no fees: pass the final quiz and get a certificate with your name.
 
-**Take the course:** https://ibrahimsobh.github.io/introduction-to-data-structures/
+## 🚀 Take the course: [ibrahimsobh.github.io/introduction-to-data-structures](https://ibrahimsobh.github.io/introduction-to-data-structures/)
+
+👉 **Start learning now:** https://ibrahimsobh.github.io/introduction-to-data-structures/ · free, no sign-up, runs in your browser
 
 [![Course path: Big-O primer, five lessons (stack, queue, linked list, binary search tree, hash table), final quiz, then your certificate](images/course-overview.png)](https://ibrahimsobh.github.io/introduction-to-data-structures/)
 
