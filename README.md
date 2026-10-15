@@ -8,6 +8,23 @@ A **self-paced online course, completely free**, covering the basic data structu
 
 [![Course path: Big-O primer, five lessons (stack, queue, linked list, binary search tree, hash table), final quiz, then your certificate](images/course-overview.png)](https://ibrahimsobh.github.io/introduction-to-data-structures/)
 
+## What you'll learn
+
+- How stacks, queues, linked lists, binary search trees and hash tables work inside.
+- How fast each operation is, using Big-O, and how to choose the right structure.
+- How each structure maps to real Python code, line by line, with animations.
+
+## Main audience
+
+Programmers who know the basics and want a solid understanding of the core data structures. The code is in Python, so some basic programming helps.
+
+- **Computer science students** taking a first data structures course, or revising for exams.
+- **Self-taught and bootcamp developers** who want to fill the gap in the fundamentals.
+- **Developers preparing for coding interviews** who need the basics clear and quick.
+- **Junior developers** who use lists and dictionaries every day and want to know what happens underneath.
+
+It isn't aimed at readers looking for advanced structures (such as graphs, heaps or balanced trees) or formal proofs.
+
 ## What each lesson gives you
 
 - **A clear description** of how the structure works and where it's used in real software.
