@@ -4,6 +4,8 @@ A free, self-paced course on the five foundational data structures: stacks, queu
 
 **Take the course:** https://ibrahimsobh.github.io/introduction-to-data-structures/
 
+[![Course path: Big-O primer, five lessons (stack, queue, linked list, binary search tree, hash table), final quiz, then your certificate](images/course-overview.png)](https://ibrahimsobh.github.io/introduction-to-data-structures/)
+
 **How long it takes:** about 3–4 hours if you're new to programming, or 1.5–2 hours if you already program.
 
 | Part | New to programming | Already program |
