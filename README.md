@@ -36,15 +36,19 @@ It isn't aimed at readers looking for advanced structures (such as graphs, heaps
 
 [![Linked list lesson: the figure shows the chain 10, 20, 30, 40 with the cur pointer on node 30, next to the Python append code with the line cur = cur.next highlighted](images/linked-list-lesson.png)](https://ibrahimsobh.github.io/introduction-to-data-structures/#sll)
 
-**How long it takes:** about 3–4 hours if you're new to programming, or 1.5–2 hours if you already program.
+## How long it takes
+
+About 3 hours if you're new to programming, or about 1.5 hours if you already program.
 
 | Part | New to programming | Already program |
 |---|---|---|
-| Big-O primer | 20–30 min | 5–10 min |
-| Each of the 5 lessons (theory, animation, quiz) | 30–40 min | 15–20 min |
-| Choosing a structure and the cheat sheet | 15 min | 5–10 min |
+| Big-O primer | 20 min | 5 min |
+| 5 lessons (theory, animation, quiz) | 5 × 30 min = 150 min | 5 × 15 min = 75 min |
+| Choosing a structure and the cheat sheet | 10 min | 5 min |
 | Final quiz and certificate | 15 min | 10 min |
-| **Total** | **about 3–4 hours** | **about 1.5–2 hours** |
+| **Total** | **195 min ≈ 3 hours** | **95 min ≈ 1.5 hours** |
+
+## Final quiz and certificate
 
 Finish with the final quiz. Score 8 of 10 or more to get a certificate with your name, which you can download as an image or save as a PDF and share.
 
