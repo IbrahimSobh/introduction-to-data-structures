@@ -1,0 +1,3526 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Introduction to Data Structures</title>
+<script>
+/* Apply the saved (or OS) theme before first paint to avoid a flash. */
+(function () {
+  var t = null;
+  try { t = localStorage.getItem("ds-theme"); } catch (e) {}
+  if (t !== "light" && t !== "dark") t = window.matchMedia && matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  document.documentElement.dataset.theme = t;
+})();
+</script>
+<style>
+:root {
+  color-scheme: light;
+  --bg: #f4f4f1;
+  --surface: #fcfcfb;
+  --surface-2: #efeee9;
+  --border: #dcdbd4;
+  --text: #0b0b0b;
+  --text-2: #52514e;
+  --muted: #6b6a65;
+  --accent: #2a78d6;   /* default node / primary */
+  --accent-strong: #2b6bc9; /* primary button background (white text >= 4.5:1) */
+  --hot: #eb6834;      /* currently active / being compared */
+  --ok: #1baf7a;       /* found / success */
+  --bad: #e34948;      /* removed / error */
+  --violet: #6250d6;   /* secondary highlight (visited, pointer) */
+  --s1: #2a78d6; --s2: #eb6834; --s3: #1baf7a; --s4: #eda100; --s5: #e87ba4;
+  --code-bg: #1e1f22; --code-text: #e6e4dc; --code-hl: rgba(235,104,52,.28);
+  --shadow: 0 1px 2px rgba(0,0,0,.05), 0 4px 16px rgba(0,0,0,.05);
+  --mono: ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, monospace;
+  --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #121211;
+  --surface: #1a1a19;
+  --surface-2: #242422;
+  --border: #353532;
+  --text: #f0efec;
+  --text-2: #c3c2b7;
+  --muted: #8e8d86;
+  --accent: #3987e5;
+  --accent-strong: #2f6fcc;
+  --hot: #d95926;
+  --ok: #199e70;
+  --bad: #e66767;
+  --violet: #9085e9;
+  --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500; --s5: #d55181;
+  --code-bg: #0e0e0d; --code-hl: rgba(217,89,38,.32);
+  --shadow: 0 1px 2px rgba(0,0,0,.4);
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; scroll-padding-top: 72px; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.6 var(--sans); }
+a { color: var(--accent); }
+code { font-family: var(--mono); font-size: .9em; background: var(--surface-2); padding: 1px 5px; border-radius: 4px; }
+h1, h2, h3 { line-height: 1.25; }
+h2 { font-size: 1.75rem; margin: 0 0 .25rem; }
+h3 { font-size: 1.15rem; margin: 1.6rem 0 .5rem; }
+
+/* ---------- layout ---------- */
+header.top {
+  position: sticky; top: 0; z-index: 50; height: 56px;
+  display: flex; align-items: center; gap: 16px; padding: 0 20px;
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
+  backdrop-filter: blur(8px); border-bottom: 1px solid var(--border);
+}
+header.top .brand { font-weight: 700; font-size: 1.05rem; margin-right: auto; }
+header.top label { font-size: .85rem; color: var(--text-2); display: flex; align-items: center; gap: 8px; }
+.layout { display: grid; grid-template-columns: 230px minmax(0, 1fr); }
+nav.side {
+  position: sticky; top: 56px; height: calc(100vh - 56px); overflow-y: auto;
+  padding: 20px 12px; border-right: 1px solid var(--border);
+}
+nav.side a {
+  display: block; padding: 6px 10px; border-radius: 6px; color: var(--text-2);
+  text-decoration: none; font-size: .92rem;
+}
+nav.side a:hover { background: var(--surface-2); color: var(--text); }
+nav.side a.current { background: var(--surface-2); color: var(--text); font-weight: 600; box-shadow: inset 3px 0 0 var(--accent); }
+main { padding: 32px clamp(16px, 4vw, 56px) 80px; max-width: 1180px; }
+@media (max-width: 860px) {
+  .layout { grid-template-columns: minmax(0, 1fr); }
+  html { scroll-padding-top: 112px; }
+  nav.side {
+    position: sticky; top: 56px; z-index: 40; height: auto; overflow-x: auto; overflow-y: hidden;
+    display: flex; gap: 6px; padding: 8px 12px; border-right: 0; border-bottom: 1px solid var(--border);
+    background: color-mix(in srgb, var(--surface) 92%, transparent); backdrop-filter: blur(8px);
+    white-space: nowrap; scrollbar-width: thin;
+  }
+  nav.side a { flex: none; padding: 4px 12px; border-radius: 999px; border: 1px solid var(--border); font-size: .85rem; background: var(--surface); }
+  nav.side a.current { box-shadow: none; border-color: var(--accent); background: var(--surface-2); }
+}
+
+.section { padding: 40px 0 24px; border-bottom: 1px solid var(--border); }
+.section:last-child { border-bottom: 0; }
+.lead { color: var(--text-2); font-size: 1.08rem; margin-top: .25rem; max-width: 760px; }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px; box-shadow: var(--shadow); min-width: 0; }
+.grid2 { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 16px; margin: 20px 0; align-items: start; }
+@media (max-width: 1050px) { .grid2 { grid-template-columns: 1fr; } }
+.callout { border-left: 4px solid var(--accent); background: var(--surface); padding: 10px 16px; border-radius: 0 8px 8px 0; margin: 16px 0; }
+.callout.tip { border-color: var(--ok); }
+.callout.warn { border-color: var(--hot); }
+
+/* ---------- controls ---------- */
+.controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 12px; }
+.controls .sep { width: 1px; height: 24px; background: var(--border); margin: 0 4px; }
+button {
+  font: 600 .88rem var(--sans); padding: 7px 13px; border-radius: 8px; cursor: pointer;
+  border: 1px solid var(--accent-strong); background: var(--accent-strong); color: #fff;
+  transition: filter .15s, transform .05s;
+}
+button:hover { filter: brightness(1.08); }
+button:active { transform: translateY(1px); }
+button.secondary { background: transparent; color: var(--text); border-color: var(--border); }
+button.secondary:hover { background: var(--surface-2); }
+button:disabled { opacity: .45; cursor: not-allowed; filter: none; }
+input[type="text"], input[type="number"], select {
+  font: .9rem var(--mono); padding: 7px 9px; border-radius: 8px; width: 84px;
+  border: 1px solid var(--border); background: var(--surface); color: var(--text);
+}
+input:focus-visible, button:focus-visible, select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* ---------- visual area ---------- */
+.viz {
+  position: relative; min-height: 260px; border-radius: 10px; overflow: auto;
+  background: var(--surface-2); padding: 16px;
+  background-image: radial-gradient(var(--border) 1px, transparent 1px); background-size: 18px 18px;
+}
+.viz svg { display: block; max-width: 100%; }
+.viz .caption { position: absolute; top: 8px; left: 12px; font-size: .75rem; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
+.node {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 46px; height: 46px; padding: 0 8px; border-radius: 9px;
+  border: 2px solid var(--accent); background: var(--surface); color: var(--text);
+  font: 600 15px var(--mono); transition: all .3s ease; position: relative;
+}
+.node.active  { border-color: var(--hot); background: color-mix(in srgb, var(--hot) 16%, var(--surface)); transform: translateY(-4px); }
+.node.found   { border-color: var(--ok);  background: color-mix(in srgb, var(--ok) 20%, var(--surface)); }
+.node.visited { border-color: var(--violet); background: color-mix(in srgb, var(--violet) 14%, var(--surface)); }
+.node.removed { border-color: var(--bad); opacity: 0; transform: scale(.6); }
+.node.dim     { opacity: .4; }
+.node.new     { animation: pop .4s ease; }
+.node .tag { position: absolute; top: -20px; left: 50%; transform: translateX(-50%); font: 600 11px var(--sans); color: var(--text-2); white-space: nowrap; }
+.node .sub { position: absolute; bottom: -19px; left: 50%; transform: translateX(-50%); font: 11px var(--mono); color: var(--muted); white-space: nowrap; }
+@keyframes pop { 0% { transform: scale(.4); opacity: 0; } 70% { transform: scale(1.08); } 100% { transform: scale(1); opacity: 1; } }
+/* SVG node equivalents (trees, graphs) */
+.svg-node circle { fill: var(--surface); stroke: var(--accent); stroke-width: 2; transition: all .3s; }
+.svg-node text { fill: var(--text); font: 600 14px var(--mono); text-anchor: middle; dominant-baseline: central; }
+.svg-node.active circle  { stroke: var(--hot); fill: color-mix(in srgb, var(--hot) 22%, var(--surface)); }
+.svg-node.found circle   { stroke: var(--ok); fill: color-mix(in srgb, var(--ok) 24%, var(--surface)); }
+.svg-node.visited circle { stroke: var(--violet); fill: color-mix(in srgb, var(--violet) 18%, var(--surface)); }
+.svg-edge { stroke: var(--muted); stroke-width: 2; fill: none; transition: all .3s; }
+.svg-edge.active { stroke: var(--hot); stroke-width: 3; }
+.svg-edge.found  { stroke: var(--ok); stroke-width: 3; }
+
+.status { margin-top: 10px; min-height: 1.6em; font-size: .92rem; color: var(--text-2); }
+.log { margin-top: 10px; max-height: 150px; overflow-y: auto; font: 12.5px/1.5 var(--mono); border-top: 1px dashed var(--border); padding-top: 8px; }
+.log div { padding: 1px 0; color: var(--text-2); }
+.log div.ok::before  { content: "✓ "; color: var(--ok); }
+.log div.err::before { content: "✗ "; color: var(--bad); }
+.log div.info::before { content: "→ "; color: var(--accent); }
+.log div:first-child { color: var(--text); }
+
+/* ---------- code panel ---------- */
+.code {
+  background: var(--code-bg); color: var(--code-text); border-radius: 10px;
+  font: 12.5px/1.6 var(--mono); padding: 10px 0; max-height: 470px; overflow: auto; position: relative;
+}
+.code .title { color: #8e8d86; font-size: 11px; padding: 0 14px 6px; text-transform: uppercase; letter-spacing: .08em; }
+.code .ln { display: flex; white-space: pre; padding: 0 14px 0 0; transition: background .2s; }
+.code .ln .no { width: 36px; flex: none; text-align: right; padding-right: 12px; color: #5f5e59; user-select: none; }
+.code .ln.hl { background: var(--code-hl); box-shadow: inset 3px 0 0 var(--hot); }
+.t-k { color: #c792ea; } .t-sf { color: #f78c6c; } .t-s { color: #c3e88d; } .t-c { color: #7f7e78; font-style: italic; } .t-n { color: #f9c859; } .t-d { color: #82aaff; }
+
+/* ---------- tables ---------- */
+table.cx { border-collapse: collapse; width: 100%; font-size: .92rem; margin: 10px 0; }
+table.cx th, table.cx td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--border); }
+table.cx th { font-size: .78rem; text-transform: uppercase; letter-spacing: .05em; color: var(--text-2); }
+table.cx tbody tr:hover { background: var(--surface-2); }
+.big { font-family: var(--mono); font-weight: 600; white-space: nowrap; }
+.big:is(.o1, .olog, .on, .onlog, .on2)::before { content: ""; display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; vertical-align: 1px; background: var(--muted); }
+.big.o1::before { background: var(--s1); } .big.olog::before { background: var(--s3); } .big.on::before { background: var(--s4); }
+.big.onlog::before { background: var(--s5); } .big.on2::before { background: var(--s2); }
+
+/* ---------- quiz ---------- */
+.quiz { margin: 16px 0; }
+.quiz .q { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; margin-bottom: 10px; }
+.quiz .q p { margin: 0 0 10px; font-weight: 600; }
+.quiz .opts { display: flex; flex-wrap: wrap; gap: 8px; }
+.quiz .opts button { background: var(--surface-2); color: var(--text); border-color: var(--border); font-weight: 500; }
+.quiz .opts button.right { background: color-mix(in srgb, var(--ok) 22%, var(--surface)); border-color: var(--ok); }
+.quiz .opts button.wrong { background: color-mix(in srgb, var(--bad) 18%, var(--surface)); border-color: var(--bad); }
+.quiz .why { margin-top: 10px; font-size: .92rem; color: var(--text-2); display: none; }
+.quiz .why.show { display: block; }
+.quiz .score { font-size: .9rem; color: var(--text-2); }
+
+/* ---------- intro bits ---------- */
+.hero { padding: 24px 0 8px; }
+.hero h1 { font-size: clamp(2rem, 4vw, 2.8rem); margin: 0 0 8px; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0; }
+.chip { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 999px; border: 1px solid var(--border); background: var(--surface); color: var(--text); text-decoration: none; font-size: .9rem; }
+.chip:hover { border-color: var(--accent); }
+.legend { display: flex; flex-wrap: wrap; gap: 14px; font-size: .85rem; color: var(--text-2); margin: 4px 0 8px; }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.legend i { width: 14px; height: 3px; border-radius: 2px; display: inline-block; }
+.chart-wrap { position: relative; }
+.tooltip { position: absolute; pointer-events: none; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; font-size: .82rem; box-shadow: var(--shadow); white-space: nowrap; opacity: 0; transition: opacity .1s; z-index: 5; }
+.tooltip .row { display: flex; align-items: center; gap: 6px; }
+.tooltip .row i { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+.tooltip .row b { margin-left: auto; padding-left: 14px; font-family: var(--mono); }
+.order { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin: 12px 0; counter-reset: step; }
+.order a { counter-increment: step; display: block; padding: 10px 12px; border-radius: 10px; background: var(--surface); border: 1px solid var(--border); text-decoration: none; color: var(--text); font-size: .92rem; }
+.order a::before { content: counter(step); display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: var(--surface-2); color: var(--text-2); font-size: .75rem; font-weight: 700; margin-right: 8px; }
+.order a:hover { border-color: var(--accent); }
+.order a small { display: block; color: var(--muted); margin-top: 4px; font-size: .8rem; }
+.scenario { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
+.scenario .card p { margin: 0 0 10px; }
+.scenario .answer { display: none; font-size: .92rem; color: var(--text-2); }
+.scenario .answer.show { display: block; }
+.scenario select { width: 100%; font-family: var(--sans); }
+ol.ex li { margin-bottom: 6px; }
+footer { color: var(--muted); font-size: .85rem; padding: 32px 0; }
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="brand">🧱 Intro to Data Structures</div>
+  <label>Animation speed
+    <input type="range" id="speed" min="0.25" max="3" step="0.25" value="1" style="width:110px">
+    <span id="speedVal" style="font-family:var(--mono);width:36px">1×</span>
+  </label>
+  <button class="secondary" id="themeBtn" title="Toggle light / dark">◐ Theme</button>
+</header>
+
+<div class="layout">
+<nav class="side" id="nav" aria-label="Sections"></nav>
+<main>
+
+<script>
+/* ======================================================================
+   DS — shared helpers used by every visualizer below.
+   ====================================================================== */
+const DS = (() => {
+  const esc = s => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+  function el(tag, props = {}, ...children) {
+    const e = document.createElement(tag);
+    for (const [k, v] of Object.entries(props || {})) {
+      if (v == null || v === false) continue;
+      if (k === "class") e.className = v;
+      else if (k === "style" && typeof v === "object") Object.assign(e.style, v);
+      else if (k === "dataset") Object.assign(e.dataset, v);
+      else if (k === "html") e.innerHTML = v;
+      else if (k.startsWith("on") && typeof v === "function") e.addEventListener(k.slice(2), v);
+      else e.setAttribute(k, v === true ? "" : v);
+    }
+    for (const c of children.flat()) if (c != null && c !== false) e.append(c instanceof Node ? c : document.createTextNode(c));
+    return e;
+  }
+
+  const SVGNS = "http://www.w3.org/2000/svg";
+  function svg(tag, attrs = {}, ...children) {
+    const e = document.createElementNS(SVGNS, tag);
+    for (const [k, v] of Object.entries(attrs)) if (v != null) e.setAttribute(k, v);
+    for (const c of children.flat()) if (c != null) e.append(c instanceof Node ? c : document.createTextNode(c));
+    return e;
+  }
+
+  const reducedMotion = () => !!(window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches);
+
+  let speed = 1;
+  const sleep = ms => new Promise(r => setTimeout(r, ms));
+  // Pause between animation steps; scaled by the global speed slider.
+  const wait = (mult = 1) => sleep(650 * mult / speed);
+
+  // Run an async animation, disabling the section's buttons until it finishes.
+  async function run(root, fn) {
+    if (root.dataset.busy) return;
+    root.dataset.busy = "1";
+    // Only touch buttons that are currently enabled, so ones disabled for other
+    // reasons stay disabled afterwards.
+    const btns = [...root.querySelectorAll("button:not(.always)")].filter(b => !b.disabled);
+    const focused = document.activeElement;
+    btns.forEach(b => (b.disabled = true));
+    try { await fn(); }
+    catch (e) { console.error(e); }
+    finally {
+      delete root.dataset.busy;
+      btns.forEach(b => (b.disabled = false));
+      // Disabling a focused button drops focus to <body>; give it back.
+      const lost = !document.activeElement || document.activeElement === document.body;
+      if (focused && btns.includes(focused) && lost && focused.isConnected && !focused.disabled) focused.focus({ preventScroll: true });
+    }
+  }
+
+  function hlPy(line) {
+    const re = /(#.*$)|(f?"[^"]*"|f?'[^']*')|\b(def|class|if|elif|else|while|for|return|in|not|and|or|is|None|True|False|raise|yield|from|break|continue|lambda|self|pass)\b|\b(\d+)\b/g;
+    let out = "", last = 0;
+    line.replace(re, (m, c, s, k, n, off) => {
+      out += esc(line.slice(last, off));
+      const cls = c ? "c" : s ? "s" : k ? (k === "self" ? "sf" : "k") : "n";
+      out += `<span class="t-${cls}">${esc(m)}</span>`;
+      last = off + m.length;
+      return m;
+    });
+    out += esc(line.slice(last));
+    return out.replace(/(<span class="t-k">(?:def|class)<\/span>\s+)(\w+)/, '$1<span class="t-d">$2</span>');
+  }
+
+  // Render Python source into a code panel. Returns { hl(...targets), clear() }.
+  // A target is a 1-based line number or a substring; a substring highlights the
+  // first line that contains it. To disambiguate, a target may also be an object
+  // { find: "substring", after: "def method" }: the first line containing `find`
+  // at or after the first line containing `after`.
+  function code(container, src, title) {
+    const lines = src.replace(/^\n+|\s+$/g, "").split("\n");
+    container.innerHTML = "";
+    if (title) container.append(el("div", { class: "title" }, title));
+    const rows = lines.map((t, i) => {
+      const r = el("div", { class: "ln" }, el("span", { class: "no" }, String(i + 1)), el("span", { html: hlPy(t) || " " }));
+      container.append(r);
+      return r;
+    });
+    function clear() { rows.forEach(r => r.classList.remove("hl")); }
+    function hl(...targets) {
+      clear();
+      let first = null;
+      for (const t of targets.flat()) {
+        if (t == null) continue;
+        let idx;
+        if (typeof t === "number") idx = t - 1;
+        else if (typeof t === "object") {
+          const start = t.after != null ? lines.findIndex(l => l.includes(t.after)) : 0;
+          idx = start < 0 || t.find == null ? -1 : lines.findIndex((l, i) => i >= start && l.includes(t.find));
+        }
+        else idx = lines.findIndex(l => l.includes(t));
+        if (rows[idx]) { rows[idx].classList.add("hl"); first = first ?? rows[idx]; }
+      }
+      if (first) {
+        const top = first.offsetTop - container.clientHeight / 3;
+        container.scrollTo({ top: Math.max(0, top), behavior: reducedMotion() ? "auto" : "smooth" });
+      }
+    }
+    return { hl, clear, lines };
+  }
+
+  // Prepend a line to an operation log. kind: "ok" | "err" | "info" | "".
+  function log(logEl, msg, kind = "") {
+    logEl.prepend(el("div", { class: kind, html: msg }));
+    while (logEl.children.length > 40) logEl.lastChild.remove();
+  }
+
+  // onChange (optional) is called with {correct, answered, total} after each answer.
+  function quiz(container, questions, onChange) {
+    container.classList.add("quiz");
+    let correct = 0, answered = 0;
+    const score = el("div", { class: "score" });
+    const update = () => {
+      score.textContent = `Score: ${correct} / ${answered} answered (${questions.length} total)`;
+      if (onChange) onChange({ correct, answered, total: questions.length });
+    };
+    questions.forEach(({ q, options, answer, why }) => {
+      const whyEl = el("div", { class: "why", "aria-live": "polite" });
+      const opts = el("div", { class: "opts" });
+      let done = false;
+      options.forEach((o, i) => {
+        const b = el("button", {
+          class: "always",
+          onclick: () => {
+            if (done) return;
+            done = true; answered++;
+            const ok = i === answer;
+            const rightBtn = opts.children[answer];
+            if (ok) correct++;
+            else { b.classList.add("wrong"); b.prepend("✗ "); }
+            rightBtn.classList.add("right"); rightBtn.prepend("✓ ");
+            whyEl.innerHTML = (ok ? "<b>Correct!</b> " : `<b>Not quite.</b> The correct answer is <b>${esc(options[answer])}</b>. `) + (why || "");
+            whyEl.classList.add("show");
+            update();
+          }
+        }, o);
+        opts.append(b);
+      });
+      container.append(el("div", { class: "q" }, el("p", { html: q }), opts, whyEl));
+    });
+    container.append(score);
+    update();
+  }
+
+  const randInt = (a, b) => a + Math.floor(Math.random() * (b - a + 1));
+  // Parse "5, 3 8" -> [5, 3, 8] (numbers when possible, otherwise strings).
+  const parseVals = str => String(str).split(/[\s,]+/).filter(Boolean).map(s => (isNaN(+s) ? s : +s));
+
+  return {
+    el, svg, esc, sleep, wait, run, code, log, quiz, randInt, parseVals, reducedMotion,
+    get speed() { return speed; },
+    set speed(v) { speed = v; },
+  };
+})();
+
+document.getElementById("speed").addEventListener("input", e => {
+  DS.speed = +e.target.value;
+  document.getElementById("speedVal").textContent = DS.speed + "×";
+});
+document.getElementById("themeBtn").addEventListener("click", () => {
+  const root = document.documentElement;
+  const dark = root.dataset.theme === "dark" ||
+    (!root.dataset.theme && matchMedia("(prefers-color-scheme: dark)").matches);
+  const next = dark ? "light" : "dark";
+  root.dataset.theme = next;
+  try { localStorage.setItem("ds-theme", next); } catch (e) {}
+  document.dispatchEvent(new Event("themechange"));
+});
+// Theme was already applied by the inline script in <head> (saved choice, else OS preference).
+</script>
+
+<section class="section hero" id="intro" data-title="Welcome">
+  <div class="kicker">Free self-paced course · Certificate on completion</div>
+  <h1>Introduction to Data Structures</h1>
+  <p class="lead">Learn the five foundational data structures every programmer uses: stacks, queues, linked lists, binary search trees and hash tables. Each lesson pairs the <b>theory</b> (how it works and what it costs) with <b>practice</b>: the real Python code, an interactive visualizer you can drive yourself, and quizzes. Go at your own pace, then pass the final quiz to earn your certificate.</p>
+  <style>
+    #intro .kicker { font-size: .8rem; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: var(--accent); margin: 0 0 6px; }
+    #intro .pillars { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin: 18px 0 0; }
+    #intro .pillar { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; }
+    #intro .pillar .p-ico { font-size: 1.4rem; line-height: 1; }
+    #intro .pillar h3 { margin: 8px 0 4px; font-size: 1rem; }
+    #intro .pillar p { margin: 0; color: var(--text-2); font-size: .9rem; line-height: 1.45; }
+    #intro .path { list-style: none; counter-reset: step; margin: 10px 0 0; padding: 0; display: grid; gap: 8px; }
+    #intro .path li { counter-increment: step; display: grid; grid-template-columns: 26px minmax(0, 1fr); column-gap: 12px; align-items: start; }
+    #intro .path li::before { content: counter(step); flex: none; width: 26px; height: 26px; border-radius: 50%; display: inline-grid; place-items: center;
+      font-weight: 700; font-size: .85rem; color: var(--accent); border: 2px solid var(--accent); grid-row: span 2; }
+    #intro .path li b, #intro .path li span { grid-column: 2; }
+    #intro .path li span { color: var(--text-2); font-size: .95rem; }
+    #intro .facts { display: flex; flex-wrap: wrap; gap: 8px 18px; margin: 14px 0 0; padding: 0; list-style: none; font-size: .9rem; color: var(--text-2); }
+    #intro .facts b { color: var(--text); }
+    @media (max-width: 700px) { #intro .pillars { grid-template-columns: minmax(0, 1fr); } }
+  </style>
+  <div class="pillars">
+    <div class="pillar"><div class="p-ico" aria-hidden="true">📘</div><h3>Theory</h3><p>The idea behind each structure, how its operations work step by step, Big-O costs, and when to choose it.</p></div>
+    <div class="pillar"><div class="p-ico" aria-hidden="true">🛠️</div><h3>Practice</h3><p>Real Python code with each line highlighted as it runs, interactive visualizers, and a quiz per lesson.</p></div>
+    <div class="pillar"><div class="p-ico" aria-hidden="true">🎓</div><h3>Certificate</h3><p>Score 80% or more on the final quiz to get a certificate with your name, ready to print or save as PDF.</p></div>
+  </div>
+  <ul class="facts" aria-label="Course facts">
+    <li><b>5</b> lessons</li>
+    <li><b>15</b> lesson quiz questions</li>
+    <li><b>10</b>-question final quiz</li>
+    <li>Self-paced · works offline</li>
+  </ul>
+
+  <h3>How the course works</h3>
+  <ol class="path">
+    <li><b>Start with the Big-O primer</b><span>a short refresher on how we measure cost.</span></li>
+    <li><b>Work through the 5 lessons in order</b><span>read the idea, run the visualizer, watch the code panel, then take the lesson quiz.</span></li>
+    <li><b>Practise</b><span>compare structures in "Choosing a structure" and the complexity cheat sheet.</span></li>
+    <li><b>Take the final quiz</b><span>One list of 10 questions covering every lesson. Score 8 of 10 or more to earn your certificate.</span></li>
+  </ol>
+  <div class="callout tip"><b>Tip for each lesson:</b> before each animation step finishes, guess what will happen next. Use the <b>Animation speed</b> slider at the top to slow down tricky steps. There's no time limit, and you can retake any quiz.</div>
+  <style>
+    #intro .ckey { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; margin: 16px 0 0; }
+    #intro .ckey h3 { margin: 0 0 2px; font-size: 1rem; }
+    #intro .ckey > p { margin: 0 0 12px; color: var(--text-2); font-size: .92rem; }
+    #intro .ckey ul { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 18px; }
+    #intro .ckey li { display: flex; align-items: center; gap: 12px; }
+    #intro .ckey .node { flex: none; min-width: 40px; height: 40px; font-size: 14px; transform: none; }
+    #intro .ckey b { display: block; }
+    @media (max-width: 560px) { #intro .ckey ul { grid-template-columns: minmax(0, 1fr); } }
+    #intro .ckey small { color: var(--text-2); font-size: .85rem; line-height: 1.35; display: block; }
+  </style>
+  <div class="ckey" role="group" aria-labelledby="ckeyTitle">
+    <h3 id="ckeyTitle">Colour key for the animations</h3>
+    <p>When you press a button in any section, the boxes change colour to show what the code is doing at that moment:</p>
+    <ul>
+      <li><span class="node" aria-hidden="true">7</span><span><b>Normal</b><small>An item sitting in the structure, not involved in the current step.</small></span></li>
+      <li><span class="node active" aria-hidden="true">7</span><span><b>Being examined</b><small>The item the code is looking at right now, e.g. comparing it during a search.</small></span></li>
+      <li><span class="node visited" aria-hidden="true">7</span><span><b>Visited / pointer</b><small>Already checked, or where a pointer like <code>head</code> or <code>cur</code> points.</small></span></li>
+      <li><span class="node found" aria-hidden="true">7</span><span><b>Found / done</b><small>The result: the item a search found, or a step that finished.</small></span></li>
+    </ul>
+  </div>
+</section>
+
+<section class="section" id="bigo" data-title="Big-O primer">
+  <h2>A quick primer on Big-O</h2>
+  <p class="lead">Big-O describes how an operation's running time <b>grows</b> as the amount of data (<i>n</i>) grows. It ignores constant factors and only looks at the overall shape of the curve.</p>
+  <div class="card">
+    <div class="controls">
+      <label style="font-size:.9rem;color:var(--text-2)">n up to <input type="range" id="bigoN" min="8" max="200" value="40" style="width:160px;vertical-align:middle"></label>
+      <span id="bigoNVal" class="big" style="font-size:.9rem"></span>
+      <span class="sep"></span>
+      <button class="secondary always" id="bigoScale" aria-pressed="false">Log scale: off</button>
+      <button class="secondary always" id="bigoTable">Show as table</button>
+    </div>
+    <div class="legend" id="bigoLegend"></div>
+    <div class="chart-wrap" id="bigoWrap">
+      <svg id="bigoSvg" viewBox="0 0 760 340" style="width:100%;height:auto;display:block" role="img" aria-label="Growth of O(1), O(log n), O(n), O(n log n), and O(n squared)"></svg>
+      <div class="tooltip" id="bigoTip"></div>
+    </div>
+    <div id="bigoTableWrap" style="display:none"></div>
+  </div>
+  <div style="overflow-x:auto">
+  <table class="cx">
+    <thead><tr><th>Notation</th><th>Name</th><th>Intuition</th><th>Example</th><th>Steps for n = 1,000,000</th></tr></thead>
+    <tbody>
+      <tr><td><span class="big o1">O(1)</span></td><td>Constant</td><td>Same speed no matter how much data</td><td>Pushing onto a stack</td><td class="big">1</td></tr>
+      <tr><td><span class="big olog">O(log n)</span></td><td>Logarithmic</td><td>Each step cuts the problem in half</td><td>Searching a balanced BST</td><td class="big">≈ 20</td></tr>
+      <tr><td><span class="big on">O(n)</span></td><td>Linear</td><td>Touches every element once</td><td>Searching a linked list</td><td class="big">1,000,000</td></tr>
+      <tr><td><span class="big onlog">O(n log n)</span></td><td>Linearithmic</td><td>Typical of efficient sorting</td><td>Heap sort</td><td class="big">≈ 20,000,000</td></tr>
+      <tr><td><span class="big on2">O(n²)</span></td><td>Quadratic</td><td>Compares every element with every other</td><td>Naive duplicate check</td><td class="big">1,000,000,000,000</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <div class="callout"><b>Amortized</b> cost means "averaged over a long sequence of operations." An occasional operation may be slow, but if it's rare enough, the average stays low. You'll see this in the Queue and the Hash Table.</div>
+
+  <h3>Suggested learning order</h3>
+  <p style="color:var(--text-2)">Start with the linear structures, because the tree builds on the same ideas. The hash table stands alone and can be read at any time.</p>
+  <div class="order">
+    <a href="#stack">Stack<small>last in, first out</small></a>
+    <a href="#queue">Queue<small>first in, first out</small></a>
+    <a href="#sll">Singly Linked List<small>nodes + next pointers</small></a>
+    <a href="#bst">Binary Search Tree<small>sorted, branching</small></a>
+    <a href="#hash">Hash Table<small>key → bucket in O(1)</small></a>
+  </div>
+</section>
+
+<script>
+(() => {
+  const series = [
+    { key: "o1",    name: "O(1)",       color: "--s1", f: n => 1 },
+    { key: "olog",  name: "O(log n)",   color: "--s3", f: n => Math.max(Math.log2(n), 0) },
+    { key: "on",    name: "O(n)",       color: "--s4", f: n => n },
+    { key: "onlog", name: "O(n log n)", color: "--s5", f: n => n * Math.max(Math.log2(n), 0) },
+    { key: "on2",   name: "O(n²)",      color: "--s2", f: n => n * n },
+  ];
+  const svgEl = document.getElementById("bigoSvg");
+  const tip = document.getElementById("bigoTip");
+  const wrap = document.getElementById("bigoWrap");
+  const nIn = document.getElementById("bigoN");
+  const scaleBtn = document.getElementById("bigoScale");
+  const tableBtn = document.getElementById("bigoTable");
+  const tableWrap = document.getElementById("bigoTableWrap");
+  const W = 760, H = 340, M = { l: 64, r: 96, t: 14, b: 38 };
+  let logScale = false;
+  const fmt = v => v >= 1e6 ? (v / 1e6).toFixed(1) + "M" : v >= 1e4 ? Math.round(v / 1e3) + "k" : v >= 100 ? Math.round(v).toLocaleString() : (+v.toFixed(1)).toString();
+
+  document.getElementById("bigoLegend").append(...series.map(s =>
+    DS.el("span", {}, DS.el("i", { style: { background: `var(${s.color})` } }), s.name)));
+
+  function draw() {
+    const N = +nIn.value;
+    document.getElementById("bigoNVal").textContent = "n = " + N;
+    // Linear mode caps the y-axis at 4n so O(n) stays readable and O(n²) visibly shoots off the chart.
+    const yMax = logScale ? N * N : N * 4;
+    const x = n => M.l + (n - 1) / (N - 1) * (W - M.l - M.r);
+    const y = v => {
+      const t = logScale ? Math.log10(Math.max(v, 1)) / Math.log10(yMax) : v / yMax;
+      return H - M.b - Math.min(Math.max(t, 0), 1.04) * (H - M.t - M.b);
+    };
+    svgEl.innerHTML = "";
+    const S = DS.svg;
+    const gridStyle = "stroke:var(--border);stroke-width:1";
+    const txt = "fill:var(--muted);font:11px var(--sans)";
+    // y grid
+    const ticks = logScale
+      ? Array.from({ length: Math.floor(Math.log10(yMax)) + 1 }, (_, i) => 10 ** i)
+      : Array.from({ length: 5 }, (_, i) => Math.round(yMax * i / 4));
+    for (const t of ticks) {
+      svgEl.append(S("line", { x1: M.l, x2: W - M.r, y1: y(t), y2: y(t), style: gridStyle }));
+      svgEl.append(S("text", { x: M.l - 8, y: y(t) + 4, "text-anchor": "end", style: txt }, fmt(t)));
+    }
+    for (let i = 0; i <= 4; i++) {
+      const n = Math.round(1 + (N - 1) * i / 4);
+      svgEl.append(S("text", { x: x(n), y: H - M.b + 18, "text-anchor": "middle", style: txt }, n));
+    }
+    svgEl.append(S("text", { x: (M.l + W - M.r) / 2, y: H - 4, "text-anchor": "middle", style: txt }, "n (number of items)"));
+    svgEl.append(S("text", { x: 14, y: (H - M.b) / 2, "text-anchor": "middle", style: txt, transform: `rotate(-90 14 ${(H - M.b) / 2})` }, "steps"));
+    svgEl.append(S("defs", {}, S("clipPath", { id: "bigoClip" }, S("rect", { x: M.l, y: M.t - 6, width: W - M.l - M.r + 2, height: H - M.t - M.b + 6 }))));
+    // lines + direct labels
+    const pts = 120;
+    for (const s of series) {
+      let d = "";
+      for (let i = 0; i <= pts; i++) {
+        const n = 1 + (N - 1) * i / pts;
+        d += (i ? "L" : "M") + x(n).toFixed(1) + "," + y(s.f(n)).toFixed(1);
+      }
+      svgEl.append(S("path", { d, fill: "none", stroke: `var(${s.color})`, "stroke-width": 2.5, "stroke-linejoin": "round", "clip-path": "url(#bigoClip)" }));
+    }
+    // direct labels at the right edge (or where the line leaves the top), nudged apart to avoid collisions
+    const labels = series.map(s => {
+      let n = N;
+      if (s.f(N) > yMax) { // find where it exits the plot
+        let lo = 1, hi = N;
+        for (let k = 0; k < 30; k++) { const m = (lo + hi) / 2; s.f(m) > yMax ? (hi = m) : (lo = m); }
+        n = lo;
+      }
+      return { s, x: x(n), y: y(Math.min(s.f(n), yMax)), exits: n < N };
+    }).sort((a, b) => a.y - b.y);
+    for (let i = 1; i < labels.length; i++) if (labels[i].x > W - M.r - 4 && labels[i].y - labels[i - 1].y < 14 && labels[i - 1].x > W - M.r - 4) labels[i].y = labels[i - 1].y + 14;
+    for (const L of labels) {
+      svgEl.append(S("text", {
+        x: L.exits ? L.x + 6 : W - M.r + 8, y: L.exits ? M.t + 8 : L.y + 4,
+        style: "fill:var(--text-2);font:600 12px var(--mono)"
+      }, L.s.name + (L.exits ? " ↑" : "")));
+    }
+    // crosshair layer
+    const cross = S("line", { y1: M.t, y2: H - M.b, style: "stroke:var(--text-2);stroke-width:1;stroke-dasharray:3 3", visibility: "hidden" });
+    const dots = series.map(s => S("circle", { r: 4.5, fill: `var(${s.color})`, stroke: "var(--surface)", "stroke-width": 2, visibility: "hidden" }));
+    svgEl.append(cross, ...dots);
+    const hit = S("rect", { x: M.l, y: M.t, width: W - M.l - M.r, height: H - M.t - M.b, fill: "transparent", style: "cursor:crosshair" });
+    svgEl.append(hit);
+    const move = ev => {
+      const r = svgEl.getBoundingClientRect();
+      const px = (ev.clientX - r.left) * W / r.width;
+      const n = Math.round(Math.min(Math.max(1 + (px - M.l) / (W - M.l - M.r) * (N - 1), 1), N));
+      const cx = x(n);
+      cross.setAttribute("x1", cx); cross.setAttribute("x2", cx); cross.setAttribute("visibility", "visible");
+      series.forEach((s, i) => {
+        const v = s.f(n);
+        dots[i].setAttribute("cx", cx); dots[i].setAttribute("cy", y(v));
+        dots[i].setAttribute("visibility", v <= yMax ? "visible" : "hidden");
+      });
+      tip.innerHTML = `<div style="font-weight:600;margin-bottom:4px">n = ${n}</div>` +
+        [...series].reverse().map(s => `<div class="row"><i style="background:var(${s.color})"></i>${s.name}<b>${fmt(s.f(n))}</b></div>`).join("");
+      tip.style.opacity = 1;
+      const wr = wrap.getBoundingClientRect();
+      let left = ev.clientX - wr.left + 14;
+      if (left + 170 > wr.width) left = ev.clientX - wr.left - 180;
+      tip.style.left = left + "px";
+      tip.style.top = Math.max(0, ev.clientY - wr.top - 60) + "px";
+    };
+    hit.addEventListener("pointermove", move);
+    hit.addEventListener("pointerleave", () => {
+      tip.style.opacity = 0; cross.setAttribute("visibility", "hidden");
+      dots.forEach(d => d.setAttribute("visibility", "hidden"));
+    });
+    // table view
+    const ns = [1, 2, 4, 8, 16, 32, 64, 128].filter(n => n <= N).concat(N > 128 ? [N] : []);
+    tableWrap.innerHTML = "";
+    tableWrap.append(DS.el("table", { class: "cx" },
+      DS.el("thead", {}, DS.el("tr", {}, DS.el("th", {}, "n"), ...series.map(s => DS.el("th", {}, s.name)))),
+      DS.el("tbody", {}, ...ns.map(n => DS.el("tr", {}, DS.el("td", { class: "big" }, n), ...series.map(s => DS.el("td", { style: { fontFamily: "var(--mono)" } }, fmt(s.f(n)))))))));
+  }
+  nIn.addEventListener("input", draw);
+  scaleBtn.addEventListener("click", () => {
+    logScale = !logScale;
+    scaleBtn.textContent = "Log scale: " + (logScale ? "on" : "off");
+    scaleBtn.setAttribute("aria-pressed", logScale);
+    draw();
+  });
+  tableBtn.addEventListener("click", () => {
+    const show = tableWrap.style.display === "none";
+    tableWrap.style.display = show ? "block" : "none";
+    tableBtn.textContent = show ? "Hide table" : "Show as table";
+  });
+  draw();
+})();
+</script>
+
+
+
+<section class="section" id="stack" data-title="1. Stack">
+  <style>
+    #stack .node.bad { border-color: var(--bad); background: color-mix(in srgb, var(--bad) 18%, var(--surface)); }
+  </style>
+  <h2>1. Stack <small style="color:var(--muted);font-weight:500">(LIFO)</small></h2>
+  <p class="lead">A stack only lets you add or remove at the <b>top</b>: the last item in is the first item out.</p>
+  <p>Think of a pile of plates. You put a new plate on top, and you take a plate off the top. You never pull one from the middle. That one rule, <b>Last In, First Out</b>, makes a stack simple and fast.</p>
+
+  <div class="grid2">
+    <div class="card">
+      <div class="controls">
+        <input type="text" class="s-val" placeholder="value" aria-label="Value to push">
+        <button class="s-push">push</button>
+        <button class="s-pop">pop</button>
+        <button class="s-peek">peek</button>
+        <span class="sep"></span>
+        <button class="secondary s-rand">Random</button>
+        <button class="secondary s-reset">Reset</button>
+      </div>
+      <div class="controls">
+        <input type="text" class="s-expr" value="{[()]}(" aria-label="Bracket expression" style="width:150px">
+        <button class="s-check">Check brackets</button>
+      </div>
+      <div class="viz">
+        <span class="caption">Stack s · _items (end of list = top)</span>
+        <div style="display:flex;flex-wrap:wrap;gap:28px 40px;align-items:flex-end;padding-top:26px">
+          <div>
+            <div class="s-col" style="display:flex;flex-direction:column-reverse;gap:8px;min-height:60px"></div>
+            <div style="border-top:3px solid var(--text-2);margin:8px 0 0 38px;width:96px"></div>
+            <div class="s-list" style="font:12px var(--mono);color:var(--text-2);margin-top:6px"></div>
+          </div>
+          <div style="flex:1;min-width:220px">
+            <div style="font:600 12px var(--sans);color:var(--text-2);margin-bottom:8px">balanced(expr) — scanning characters</div>
+            <div class="s-chars" style="display:flex;flex-wrap:wrap;gap:24px 6px;padding-bottom:20px;min-height:40px;color:var(--muted);font-size:.85rem">Press “Check brackets” to run the demo.</div>
+            <div style="display:flex;gap:16px;align-items:flex-end;margin-top:6px">
+              <div>
+                <div class="s-mini" style="display:flex;flex-direction:column-reverse;gap:6px;min-height:40px"></div>
+                <div style="border-top:3px solid var(--text-2);margin-top:6px;width:60px"></div>
+                <div style="font:11px var(--mono);color:var(--muted);margin-top:4px">st</div>
+              </div>
+              <div class="s-verdict" style="font:600 14px var(--mono)"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="status"></div>
+      <div class="log"></div>
+    </div>
+    <div class="code"></div>
+  </div>
+
+  <h3>How it works</h3>
+  <p>The stack is a Python list where the <b>end of the list is the top</b>. <code>append()</code> and <code>pop()</code> at the end of a list are both O(1): nothing else has to move. Using the <i>front</i> of the list as the top would be a mistake, because <code>pop(0)</code> shifts every other element, which costs O(n).</p>
+  <div class="callout tip"><b>Bracket check:</b> push every opening bracket. For each closing bracket, pop and check that the two match. If a pop finds the wrong bracket (or nothing), or the stack is not empty at the end, the brackets are unbalanced. Try <code>([)]</code> and <code>((()</code>.</div>
+
+  <table class="cx">
+    <thead><tr><th>Operation</th><th>Cost</th><th>Why</th></tr></thead>
+    <tbody>
+      <tr><td><code>push</code></td><td><span class="big o1">O(1)</span></td><td>amortized; <code>list.append</code> at the end</td></tr>
+      <tr><td><code>pop</code></td><td><span class="big o1">O(1)</span></td><td><code>list.pop()</code> at the end</td></tr>
+      <tr><td><code>peek</code></td><td><span class="big o1">O(1)</span></td><td>read <code>_items[-1]</code></td></tr>
+      <tr><td>search for a value</td><td><span class="big on">O(n)</span></td><td>a stack isn't built for this</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Where it shows up</h3>
+  <ul>
+    <li>The <b>call stack</b>: every function call pushes a frame, and every return pops one.</li>
+    <li><b>Undo</b> in editors.</li>
+    <li><b>Matching brackets</b> and parsing expressions.</li>
+    <li><b>Depth-first search</b> of trees and graphs.</li>
+  </ul>
+
+  <div class="quizbox"></div>
+</section>
+<script>
+(() => {
+  const root = document.getElementById("stack");
+  const $ = s => root.querySelector(s);
+  const { el, esc } = DS;
+
+  const SRC = `class Stack:
+    def __init__(self):
+        self._items = []
+
+    def push(self, item):
+        self._items.append(item)
+
+    def pop(self):
+        if self.is_empty():
+            raise IndexError("pop from empty stack")
+        return self._items.pop()
+
+    def peek(self):
+        if self.is_empty():
+            raise IndexError("peek from empty stack")
+        return self._items[-1]
+
+    def is_empty(self):
+        return not self._items
+
+
+# Practical use: balanced brackets check
+# (in data_structures.py this is defined inside demo_stack())
+def balanced(expr):
+    pairs = {")": "(", "]": "[", "}": "{"}
+    st = Stack()
+    for ch in expr:
+        if ch in "([{":
+            st.push(ch)
+        elif ch in pairs:
+            if st.is_empty() or st.pop() != pairs[ch]:
+                return False
+    return st.is_empty()`;
+
+  const cp = DS.code($(".code"), SRC, "data_structures.py — Stack + balanced() (nested in demo_stack())");
+  // Line number of the first line containing `sub` inside function `fn`.
+  const L = (fn, sub) => {
+    const s = cp.lines.findIndex(l => l.includes("def " + fn + "("));
+    return cp.lines.findIndex((l, j) => j >= s && l.includes(sub)) + 1;
+  };
+
+  const valIn = $(".s-val"), exprIn = $(".s-expr");
+  const colEl = $(".s-col"), listEl = $(".s-list"), viz = $(".viz");
+  const statusEl = $(".status"), logEl = $(".log");
+  const charsEl = $(".s-chars"), miniEl = $(".s-mini"), verdictEl = $(".s-verdict");
+  const MAX = 8;
+  let uid = 0, items = [];
+  const mk = v => ({ k: uid++, v, node: null });
+  const fmt = v => (typeof v === "string" ? `'${v}'` : String(v));
+  const say = t => (statusEl.textContent = t);
+  const shake = e => e.animate(
+    [{ transform: "translateX(0)" }, { transform: "translateX(-7px)" }, { transform: "translateX(7px)" },
+     { transform: "translateX(-4px)" }, { transform: "translateX(0)" }], { duration: 360 });
+  function fail(msg) {
+    say("✗ " + msg);
+    DS.log(logEl, esc(msg), "err");
+    shake(viz);
+  }
+
+  function render() {
+    colEl.innerHTML = "";
+    if (!items.length) colEl.append(el("div", { style: { color: "var(--muted)", font: "13px var(--mono)", padding: "8px 0 0 38px" } }, "(empty)"));
+    items.forEach((it, i) => {
+      const top = i === items.length - 1;
+      it.node = el("div", { class: "node", style: { minWidth: "96px" } }, String(it.v));
+      colEl.append(el("div", { style: { display: "flex", alignItems: "center", gap: "8px" } },
+        el("span", { style: { width: "30px", textAlign: "right", font: "11px var(--mono)", color: "var(--muted)" } }, `[${i}]`),
+        it.node,
+        el("span", { style: { font: "600 12px var(--sans)", color: "var(--violet)", visibility: top ? "visible" : "hidden" } }, "← top")));
+    });
+    listEl.textContent = "_items = [" + items.map(it => fmt(it.v)).join(", ") + "]";
+  }
+
+  function renderMini(st) {
+    miniEl.innerHTML = "";
+    st.forEach((ch, i) => {
+      const n = el("div", { class: "node", style: { minWidth: "60px", height: "36px" } }, ch);
+      miniEl.append(el("div", { style: { display: "flex", alignItems: "center", gap: "6px" } }, n,
+        el("span", { style: { font: "600 11px var(--sans)", color: "var(--violet)", visibility: i === st.length - 1 ? "visible" : "hidden" } }, "← top")));
+    });
+    return [...miniEl.querySelectorAll(".node")];
+  }
+
+  function readVal() {
+    const vals = DS.parseVals(valIn.value);
+    valIn.value = "";
+    if (!vals.length) return DS.randInt(1, 99);
+    const v = vals[0];
+    return typeof v === "string" ? v.slice(0, 6) : v;
+  }
+
+  async function push(v) {
+    cp.hl(L("push", "def push"));
+    if (items.length >= MAX) { fail(`Demo limit of ${MAX} items (a real Python list just keeps growing).`); return; }
+    say(`push(${fmt(v)}): append to the end of the list, which is the top.`);
+    await DS.wait(0.6);
+    cp.hl(L("push", "self._items.append(item)"));
+    items.push(mk(v));
+    render();
+    const n = items[items.length - 1].node;
+    n.classList.add("new", "active");
+    DS.log(logEl, `push(${esc(fmt(v))}): top is now ${esc(fmt(v))}, size ${items.length}`, "ok");
+    await DS.wait();
+    n.classList.remove("active");
+    say(`Pushed ${fmt(v)}. Size ${items.length}. O(1): no other item moved.`);
+  }
+
+  async function pop() {
+    cp.hl(L("pop", "def pop"), L("pop", "if self.is_empty()"));
+    say("pop(): first check whether the stack is empty.");
+    await DS.wait(0.6);
+    if (!items.length) { cp.hl(L("pop", "raise IndexError")); fail("IndexError: pop from empty stack"); return; }
+    cp.hl(L("pop", "return self._items.pop()"));
+    const it = items[items.length - 1];
+    it.node.classList.add("active");
+    say(`Remove the top item (${fmt(it.v)}) from the end of the list.`);
+    await DS.wait();
+    it.node.classList.add("removed");
+    await DS.wait(0.5);
+    items.pop();
+    render();
+    const top = items.length ? fmt(items[items.length - 1].v) : "nothing (empty)";
+    DS.log(logEl, `pop() returned ${esc(fmt(it.v))}; top is now ${esc(top)}`, "ok");
+    say(`pop() returned ${fmt(it.v)}. Top is now ${top}.`);
+  }
+
+  async function peek() {
+    cp.hl(L("peek", "def peek"), L("peek", "if self.is_empty()"));
+    say("peek(): check for empty, then read the top without removing it.");
+    await DS.wait(0.6);
+    if (!items.length) { cp.hl(L("peek", "raise IndexError")); fail("IndexError: peek from empty stack"); return; }
+    cp.hl(L("peek", "return self._items[-1]"));
+    const it = items[items.length - 1];
+    it.node.classList.add("found");
+    say(`peek() returns ${fmt(it.v)} (_items[-1]). The stack does not change.`);
+    DS.log(logEl, `peek() = ${esc(fmt(it.v))}`, "info");
+    await DS.wait(1.4);
+    it.node.classList.remove("found");
+  }
+
+  async function check() {
+    const expr = exprIn.value.slice(0, 24);
+    if (!expr) { fail("Type an expression first, e.g. {[()]}("); return; }
+    const pairs = { ")": "(", "]": "[", "}": "{" };
+    const rep = `'${expr}'`;
+    charsEl.innerHTML = "";
+    charsEl.style.color = "var(--text)";
+    verdictEl.textContent = "";
+    const cells = [...expr].map((ch, i) => {
+      const n = el("div", { class: "node", style: { minWidth: "34px", height: "38px", padding: "0 4px" } }, ch, el("span", { class: "sub" }, String(i)));
+      charsEl.append(n);
+      return n;
+    });
+    let st = [];
+    renderMini(st);
+    cp.hl(L("balanced", "def balanced"), L("balanced", "pairs ="), L("balanced", "st = Stack()"));
+    say(`balanced(${rep}): start with an empty stack st.`);
+    DS.log(logEl, `balanced(${esc(rep)}): start with empty st`, "info");
+    await DS.wait();
+
+    let result = null;
+    for (let i = 0; i < cells.length; i++) {
+      const ch = expr[i], c = cells[i];
+      c.classList.add("active");
+      cp.hl(L("balanced", "for ch in expr"));
+      say(`Scan index ${i}: '${ch}'`);
+      await DS.wait(0.6);
+      if ("([{".includes(ch)) {
+        cp.hl(L("balanced", 'if ch in "([{"'), L("balanced", "st.push(ch)"));
+        st.push(ch);
+        const nodes = renderMini(st);
+        nodes[nodes.length - 1].classList.add("new");
+        say(`'${ch}' is an opening bracket, so push it onto st.`);
+        DS.log(logEl, `'${esc(ch)}' opening: push → st = [${esc(st.join(", "))}]`, "info");
+        await DS.wait();
+        c.classList.remove("active");
+        c.classList.add("visited");
+      } else if (pairs[ch]) {
+        cp.hl(L("balanced", "elif ch in pairs"), L("balanced", "if st.is_empty() or"));
+        if (!st.length) {
+          c.classList.remove("active"); c.classList.add("bad");
+          say(`'${ch}' is a closing bracket but st is empty, so nothing can match it. Return False.`);
+          DS.log(logEl, `'${esc(ch)}' closing, but st is empty`, "err");
+          await DS.wait();
+          cp.hl(L("balanced", "return False"));
+          result = false;
+          break;
+        }
+        const nodes = renderMini(st);
+        const topN = nodes[nodes.length - 1];
+        const got = st[st.length - 1], want = pairs[ch];
+        topN.classList.add("active");
+        say(`'${ch}' is a closing bracket: pop '${got}' and compare it with pairs['${ch}'] = '${want}'.`);
+        await DS.wait();
+        st.pop();
+        topN.classList.remove("active");
+        c.classList.remove("active");
+        if (got === want) {
+          topN.classList.add("found"); c.classList.add("found");
+          say(`'${got}' matches '${ch}'. Keep scanning.`);
+          DS.log(logEl, `'${esc(ch)}' closing: popped '${esc(got)}', match`, "ok");
+          await DS.wait(0.6);
+          topN.classList.add("removed");
+          await DS.wait(0.4);
+          renderMini(st);
+        } else {
+          topN.classList.add("bad"); c.classList.add("bad");
+          say(`Mismatch: popped '${got}' but '${ch}' needs '${want}'. Return False.`);
+          DS.log(logEl, `'${esc(ch)}' closing: popped '${esc(got)}', expected '${esc(want)}'`, "err");
+          shake(c);
+          await DS.wait();
+          cp.hl(L("balanced", "return False"));
+          result = false;
+          break;
+        }
+      } else {
+        c.classList.remove("active");
+        c.classList.add("dim");
+        say(`'${ch}' is not a bracket, so ignore it.`);
+        await DS.wait(0.5);
+      }
+    }
+    if (result === null) {
+      cp.hl(L("balanced", "return st.is_empty()"));
+      result = st.length === 0;
+      if (!result) {
+        renderMini(st).forEach(n => n.classList.add("bad"));
+        say(`End of input, but st still holds ${st.length} unmatched opening bracket(s). Return False.`);
+      } else {
+        say("End of input and st is empty: every bracket was matched. Return True.");
+      }
+    }
+    verdictEl.textContent = `= ${result ? "True" : "False"}`;
+    verdictEl.style.color = result ? "var(--ok)" : "var(--bad)";
+    DS.log(logEl, `balanced(${esc(rep)}) = ${result ? "True" : "False"}`, result ? "ok" : "err");
+    if (!result) shake(verdictEl);
+  }
+
+  function reset() {
+    items = [1, 2, 3].map(mk);
+    render();
+    cp.clear();
+    charsEl.innerHTML = "Press “Check brackets” to run the demo.";
+    charsEl.style.color = "var(--muted)";
+    miniEl.innerHTML = "";
+    verdictEl.textContent = "";
+    say("Stack reset to [1, 2, 3]; 3 is on top.");
+    DS.log(logEl, "reset: _items = [1, 2, 3]", "info");
+  }
+
+  $(".s-push").onclick = () => DS.run(root, () => push(readVal()));
+  $(".s-pop").onclick = () => DS.run(root, pop);
+  $(".s-peek").onclick = () => DS.run(root, peek);
+  $(".s-rand").onclick = () => DS.run(root, () => push(DS.randInt(1, 99)));
+  $(".s-reset").onclick = () => { if (!root.dataset.busy) reset(); };
+  $(".s-check").onclick = () => DS.run(root, check);
+  valIn.addEventListener("keydown", e => { if (e.key === "Enter") $(".s-push").click(); });
+  exprIn.addEventListener("keydown", e => { if (e.key === "Enter") $(".s-check").click(); });
+
+  reset();
+
+  DS.quiz($(".quizbox"), [
+    {
+      q: "You push 1, 2, 3 and then call pop() twice. What does peek() return?",
+      options: ["1", "2", "3", "IndexError"],
+      answer: 0,
+      why: "LIFO: the pops remove 3, then 2. Only 1 is left, so it is the top."
+    },
+    {
+      q: "Why does this Stack use the <i>end</i> of the Python list as the top?",
+      options: ["It saves memory", "append() and pop() at the end are O(1); pop(0) is O(n)", "Python lists can't be used any other way", "It keeps items sorted"],
+      answer: 1,
+      why: "Removing from the front shifts every remaining element one place left, which is O(n). The end of the list needs no shifting."
+    },
+    {
+      q: "balanced('([)]') returns False. At which character does it fail?",
+      options: ["'('", "'['", "')'", "']'"],
+      answer: 2,
+      why: "When ')' arrives, '[' is on top of the stack. pairs[')'] is '(', which doesn't match '[', so it returns False."
+    }
+  ]);
+})();
+</script>
+
+
+<section class="section" id="queue" data-title="2. Queue">
+  <h2>2. Queue <small style="color:var(--muted);font-weight:500">(FIFO)</small></h2>
+  <p class="lead">A queue adds at the <b>back</b> and removes from the <b>front</b>: the first item in is the first item out.</p>
+  <p>Picture a line at a shop. People join at the back and leave from the front, in the order they arrived. This version hides a neat trick inside: it is built from <b>two stacks</b>, <code>_in</code> and <code>_out</code>.</p>
+
+  <div class="grid2">
+    <div class="card">
+      <div class="controls">
+        <input type="text" class="q-val" placeholder="value" aria-label="Value to enqueue">
+        <button class="q-enq">enqueue</button>
+        <button class="q-deq">dequeue</button>
+        <button class="q-peek">peek</button>
+        <span class="sep"></span>
+        <button class="secondary q-rand">Random</button>
+        <button class="secondary q-reset">Reset</button>
+      </div>
+      <div class="viz">
+        <span class="caption">Logical queue (front → back)</span>
+        <div style="display:flex;align-items:center;gap:10px;padding:30px 0 26px;flex-wrap:wrap">
+          <span style="font:600 12px var(--sans);color:var(--text-2)">dequeue ◄</span>
+          <div class="q-logic" style="display:flex;gap:8px;flex-wrap:wrap;min-height:46px;align-items:center"></div>
+          <span style="font:600 12px var(--sans);color:var(--text-2)">◄ enqueue</span>
+        </div>
+        <div style="border-top:1px dashed var(--border);padding-top:10px;font:600 12px var(--sans);color:var(--muted);text-transform:uppercase;letter-spacing:.06em">Inside: two Python lists used as stacks</div>
+        <div style="display:flex;gap:40px;flex-wrap:wrap;align-items:flex-end;padding-top:14px">
+          <div>
+            <div class="q-out" style="display:flex;flex-direction:column-reverse;gap:8px;min-height:60px"></div>
+            <div style="border-top:3px solid var(--text-2);margin:8px 0 0 30px;width:80px"></div>
+            <div style="font:600 13px var(--mono);margin:4px 0 0 30px">_out <span style="font:11px var(--sans);color:var(--muted)">(pop here)</span></div>
+            <div class="q-outl" style="font:11px var(--mono);color:var(--muted);margin-left:30px"></div>
+          </div>
+          <div class="q-arrow" style="align-self:center;font:600 20px var(--sans);color:var(--muted);text-align:center">⟸<div style="font:11px var(--sans)">move when<br>_out is empty</div></div>
+          <div>
+            <div class="q-in" style="display:flex;flex-direction:column-reverse;gap:8px;min-height:60px"></div>
+            <div style="border-top:3px solid var(--text-2);margin:8px 0 0 30px;width:80px"></div>
+            <div style="font:600 13px var(--mono);margin:4px 0 0 30px">_in <span style="font:11px var(--sans);color:var(--muted)">(push here)</span></div>
+            <div class="q-inl" style="font:11px var(--mono);color:var(--muted);margin-left:30px"></div>
+          </div>
+          <div class="q-stats" style="font:12px/1.7 var(--mono);color:var(--text-2);align-self:center"></div>
+        </div>
+      </div>
+      <div class="status"></div>
+      <div class="log"></div>
+    </div>
+    <div class="code"></div>
+  </div>
+
+  <h3>How it works: the two-stack trick</h3>
+  <p>A plain list would make <code>dequeue</code> O(n), because <code>list.pop(0)</code> shifts every element. Instead:</p>
+  <ul>
+    <li><code>_in</code>: new items are pushed here.</li>
+    <li><code>_out</code>: items are popped from here.</li>
+  </ul>
+  <p>When <code>_out</code> is empty, every item in <code>_in</code> is moved over to <code>_out</code>. Moving them <b>reverses their order</b>, so the oldest item ends up on top of <code>_out</code>.</p>
+  <div class="callout tip"><b>Amortized O(1):</b> each item is moved from <code>_in</code> to <code>_out</code> <b>at most once</b>. One <code>dequeue</code> can cost O(n), but averaged over many operations each one is O(1). Watch the “moves per op” counter in the demo stay at or below 1.</div>
+  <div class="callout warn">In real code, use <code>collections.deque</code>. The two-stack queue is shown here because it teaches amortized analysis well.</div>
+
+  <table class="cx">
+    <thead><tr><th>Operation</th><th>Cost</th><th>Why</th></tr></thead>
+    <tbody>
+      <tr><td><code>enqueue</code></td><td><span class="big o1">O(1)</span></td><td>append to <code>_in</code></td></tr>
+      <tr><td><code>dequeue</code></td><td><span class="big o1">O(1)</span> amortized, <span class="big on">O(n)</span> worst case</td><td>the occasional transfer moves everything, but each item only once</td></tr>
+      <tr><td><code>peek</code></td><td><span class="big o1">O(1)</span></td><td><code>_out[-1]</code> or <code>_in[0]</code></td></tr>
+    </tbody>
+  </table>
+
+  <h3>Where it shows up</h3>
+  <ul>
+    <li>Print queues and task schedulers.</li>
+    <li>Message brokers.</li>
+    <li><b>Breadth-first search</b>, e.g. the BST's level-order walk.</li>
+  </ul>
+
+  <div class="quizbox"></div>
+</section>
+<script>
+(() => {
+  const root = document.getElementById("queue");
+  const $ = s => root.querySelector(s);
+  const { el, esc } = DS;
+
+  const SRC = `class Queue:
+    def __init__(self):
+        self._in = []
+        self._out = []
+
+    def enqueue(self, item):
+        self._in.append(item)
+
+    def dequeue(self):
+        if self.is_empty():
+            raise IndexError("dequeue from empty queue")
+        if not self._out:
+            while self._in:
+                self._out.append(self._in.pop())
+        return self._out.pop()
+
+    def peek(self):
+        if self.is_empty():
+            raise IndexError("peek from empty queue")
+        return self._out[-1] if self._out else self._in[0]
+
+    def is_empty(self):
+        return not self._in and not self._out`;
+
+  const cp = DS.code($(".code"), SRC, "data_structures.py — class Queue");
+  const valIn = $(".q-val"), viz = $(".viz"), statusEl = $(".status"), logEl = $(".log");
+  const logicEl = $(".q-logic"), inEl = $(".q-in"), outEl = $(".q-out"), arrowEl = $(".q-arrow");
+  const MAX = 8;
+  let IN = [], OUT = [], ops = 0, moves = 0;
+  const fmt = v => (typeof v === "string" ? `'${v}'` : String(v));
+  const say = t => (statusEl.textContent = t);
+  const shake = e => e.animate(
+    [{ transform: "translateX(0)" }, { transform: "translateX(-7px)" }, { transform: "translateX(7px)" },
+     { transform: "translateX(-4px)" }, { transform: "translateX(0)" }], { duration: 360 });
+  function fail(msg) { say("✗ " + msg); DS.log(logEl, esc(msg), "err"); shake(viz); }
+  const list = a => "[" + a.map(fmt).join(", ") + "]";
+
+  // Returns { inNodes, outNodes, logicNodes }; logical order = reversed(_out) + _in.
+  function render(frozen) {
+    const stack = (box, arr) => {
+      box.innerHTML = "";
+      if (!arr.length) box.append(el("div", { style: { color: "var(--muted)", font: "12px var(--mono)", paddingLeft: "30px" } }, "(empty)"));
+      return arr.map((v, i) => {
+        const n = el("div", { class: "node", style: { minWidth: "80px" } }, String(v));
+        box.append(el("div", { style: { display: "flex", alignItems: "center", gap: "6px" } },
+          el("span", { style: { width: "24px", textAlign: "right", font: "11px var(--mono)", color: "var(--muted)" } }, `[${i}]`), n,
+          el("span", { style: { font: "600 11px var(--sans)", color: "var(--violet)", visibility: i === arr.length - 1 ? "visible" : "hidden" } }, "← top")));
+        return n;
+      });
+    };
+    const outNodes = stack(outEl, OUT), inNodes = stack(inEl, IN);
+    $(".q-outl").textContent = "_out = " + list(OUT);
+    $(".q-inl").textContent = "_in = " + list(IN);
+    logicEl.innerHTML = "";
+    const order = frozen || [...OUT].reverse().concat(IN);
+    if (!order.length) logicEl.append(el("span", { style: { color: "var(--muted)", font: "13px var(--mono)" } }, "(empty)"));
+    const logicNodes = order.map((v, i) => {
+      const n = el("div", { class: "node" }, String(v));
+      if (i === 0) n.append(el("span", { class: "tag" }, order.length === 1 ? "front = back" : "front"));
+      else if (i === order.length - 1) n.append(el("span", { class: "tag" }, "back"));
+      n.append(el("span", { class: "sub" }, (frozen ? i >= order.length - OUT.length : i < OUT.length) ? "_out" : "_in"));
+      logicEl.append(n);
+      return n;
+    });
+    $(".q-stats").innerHTML = `ops: ${ops}<br>items moved: ${moves}<br>moves per op: ${ops ? (moves / ops).toFixed(2) : "0.00"}`;
+    return { inNodes, outNodes, logicNodes };
+  }
+
+  function readVal() {
+    const vals = DS.parseVals(valIn.value);
+    valIn.value = "";
+    if (!vals.length) return String.fromCharCode(97 + DS.randInt(0, 25));
+    const v = vals[0];
+    return typeof v === "string" ? v.slice(0, 6) : v;
+  }
+
+  async function enqueue(v) {
+    cp.hl("def enqueue");
+    if (IN.length + OUT.length >= MAX) { fail(`Demo limit of ${MAX} items reached. Dequeue some first.`); return; }
+    say(`enqueue(${fmt(v)}): push onto the top of _in.`);
+    await DS.wait(0.6);
+    cp.hl("self._in.append(item)");
+    IN.push(v); ops++;
+    const r = render();
+    r.inNodes[r.inNodes.length - 1].classList.add("new", "active");
+    r.logicNodes[r.logicNodes.length - 1].classList.add("new", "active");
+    DS.log(logEl, `enqueue(${esc(fmt(v))}) → _in = ${esc(list(IN))}`, "ok");
+    say(`${fmt(v)} joins the back of the queue. O(1): one append.`);
+    await DS.wait();
+    render();
+  }
+
+  async function dequeue() {
+    cp.hl("def dequeue", "if self.is_empty()");
+    say("dequeue(): is the queue empty (both lists empty)?");
+    await DS.wait(0.6);
+    if (!IN.length && !OUT.length) { cp.hl('raise IndexError("dequeue'); fail("IndexError: dequeue from empty queue"); return; }
+    ops++;
+    cp.hl("if not self._out");
+    let r = render();
+    if (!OUT.length) {
+      arrowEl.style.color = "var(--hot)";
+      say(`_out is empty, so move all ${IN.length} item(s) from _in to _out. This reverses their order.`);
+      DS.log(logEl, `_out empty → transfer ${IN.length} item(s) from _in`, "info");
+      await DS.wait();
+      const frozen = [...OUT].reverse().concat(IN);
+      while (IN.length) {
+        cp.hl("while self._in", "self._out.append(self._in.pop())");
+        const top = r.inNodes[r.inNodes.length - 1];
+        top.classList.add("active");
+        const v = IN[IN.length - 1];
+        say(`_in.pop() gives ${fmt(v)}; append it to _out.`);
+        await DS.wait(0.7);
+        top.classList.add("removed");
+        await DS.wait(0.35);
+        IN.pop(); OUT.push(v); moves++;
+        r = render(frozen);
+        r.outNodes[r.outNodes.length - 1].classList.add("new", "visited");
+        await DS.wait(0.5);
+      }
+      arrowEl.style.color = "var(--muted)";
+      say(`Transfer done: the oldest item (${fmt(OUT[OUT.length - 1])}) is now on top of _out.`);
+      DS.log(logEl, `after transfer: _out = ${esc(list(OUT))} (oldest on top)`, "info");
+      await DS.wait();
+    } else {
+      say(`_out is not empty, so no transfer needed. Its top (${fmt(OUT[OUT.length - 1])}) is the front.`);
+      await DS.wait(0.8);
+    }
+    cp.hl("return self._out.pop()");
+    const v = OUT[OUT.length - 1];
+    r.outNodes[r.outNodes.length - 1].classList.add("active");
+    r.logicNodes[0].classList.add("active");
+    say(`_out.pop() returns ${fmt(v)}, the front of the queue.`);
+    await DS.wait();
+    r.outNodes[r.outNodes.length - 1].classList.add("removed");
+    r.logicNodes[0].classList.add("removed");
+    await DS.wait(0.45);
+    OUT.pop();
+    render();
+    DS.log(logEl, `dequeue() = ${esc(fmt(v))}`, "ok");
+    say(`dequeue() returned ${fmt(v)}. Moves per op so far: ${(moves / ops).toFixed(2)} (never above 1).`);
+  }
+
+  async function peek() {
+    cp.hl(17, 18); // def peek / if self.is_empty()
+    say("peek(): look at the front without removing it.");
+    await DS.wait(0.6);
+    if (!IN.length && !OUT.length) { cp.hl('raise IndexError("peek'); fail("IndexError: peek from empty queue"); return; }
+    cp.hl("return self._out[-1] if self._out else self._in[0]");
+    const r = render();
+    let v, n;
+    if (OUT.length) { v = OUT[OUT.length - 1]; n = r.outNodes[r.outNodes.length - 1]; say(`_out is not empty, so the front is _out[-1] = ${fmt(v)}.`); }
+    else { v = IN[0]; n = r.inNodes[0]; say(`_out is empty, so the front is the oldest item in _in: _in[0] = ${fmt(v)}. No transfer happens.`); }
+    n.classList.add("found");
+    r.logicNodes[0].classList.add("found");
+    DS.log(logEl, `peek() = ${esc(fmt(v))}`, "info");
+    await DS.wait(1.4);
+    render();
+  }
+
+  function reset() {
+    IN = ["a", "b", "c"]; OUT = []; ops = 3; moves = 0; // the 3 enqueues count as ops
+    render(); cp.clear();
+    say("Reset: enqueued 'a', 'b', 'c'. They all sit in _in; _out is empty.");
+    DS.log(logEl, "reset: _in = ['a', 'b', 'c'], _out = []", "info");
+  }
+
+  $(".q-enq").onclick = () => DS.run(root, () => enqueue(readVal()));
+  $(".q-deq").onclick = () => DS.run(root, dequeue);
+  $(".q-peek").onclick = () => DS.run(root, peek);
+  $(".q-rand").onclick = () => DS.run(root, () => enqueue(String.fromCharCode(97 + DS.randInt(0, 25))));
+  $(".q-reset").onclick = () => { if (!root.dataset.busy) reset(); };
+  valIn.addEventListener("keydown", e => { if (e.key === "Enter") $(".q-enq").click(); });
+
+  reset();
+
+  DS.quiz($(".quizbox"), [
+    {
+      q: "After enqueue a, b, c the lists are <code>_in = [a, b, c]</code>, <code>_out = []</code>. What is <code>_out</code> right after the first dequeue() returns?",
+      options: ["[a, b]", "[c, b]", "[b, c]", "[]"],
+      answer: 1,
+      why: "The transfer makes <code>_out = [c, b, a]</code> (reversed), then <code>pop()</code> removes <code>a</code> from the top, leaving <code>[c, b]</code>."
+    },
+    {
+      q: "Why is dequeue O(1) <i>amortized</i> even though one call can move n items?",
+      options: ["Python lists are magic", "Each item is moved from _in to _out at most once", "The transfer runs in a background thread", "It isn't; it is O(n) on average"],
+      answer: 1,
+      why: "Over any sequence of operations, the total number of moves is at most the number of enqueues, so the average cost per operation stays constant."
+    },
+    {
+      q: "Why not just use one list and <code>list.pop(0)</code>?",
+      options: ["pop(0) raises an error", "pop(0) shifts every remaining element, so it is O(n)", "It would make enqueue slow", "Lists can't hold strings"],
+      answer: 1,
+      why: "Removing from the front of a Python list shifts all other elements left by one. In real code, <code>collections.deque</code> gives O(1) at both ends."
+    }
+  ]);
+})();
+</script>
+
+
+<section class="section" id="sll" data-title="3. Singly Linked List">
+  <style>
+    #sll .sll-chain { display: flex; flex-wrap: wrap; align-items: center; row-gap: 42px; padding: 36px 4px 24px; min-height: 130px; }
+    #sll .sll-unit { display: inline-flex; align-items: center; }
+    #sll .sll-n { padding: 0; align-items: stretch; }
+    #sll .sll-v { display: flex; align-items: center; justify-content: center; min-width: 30px; padding: 0 10px; }
+    #sll .sll-p { display: flex; align-items: center; justify-content: center; min-width: 22px; padding: 0 5px; border-left: 2px solid var(--border); font-size: 11px; color: var(--muted); }
+    #sll .sll-p.far { color: var(--hot); font-weight: 700; }
+    #sll .sll-arr { display: inline-block; width: 30px; text-align: center; font: 700 18px var(--sans); color: var(--muted); transition: color .3s; }
+    #sll .sll-arr.hot { color: var(--hot); }
+    #sll .sll-nil { border-style: dashed; border-color: var(--border); color: var(--muted); font-size: 12px; font-weight: 500; min-width: 50px; }
+    #sll .sll-ptr { color: var(--violet); }
+    #sll .node.bad { border-color: var(--bad); background: color-mix(in srgb, var(--bad) 18%, var(--surface)); }
+    #sll .sll-vars { font: 12px/1.7 var(--mono); color: var(--text-2); border-top: 1px dashed var(--border); padding-top: 8px; word-break: break-word; }
+  </style>
+  <h2>3. Singly Linked List <small style="color:var(--muted);font-weight:500">(chain of nodes)</small></h2>
+  <p class="lead">A linked list is a chain of <b>nodes</b>: each node holds a value and a pointer to the <b>next</b> node.</p>
+  <p>Instead of one block of memory like an array, the items can live anywhere. The list only remembers where the chain starts (<code>head</code>); the last node's <code>next</code> is <code>None</code>. Think of a treasure hunt: each clue tells you where the next one is, so to reach clue 5 you must follow clues 1 to 4.</p>
+
+  <div class="grid2">
+    <div class="card">
+      <div class="controls">
+        <input type="text" class="l-val" placeholder="value" aria-label="Value">
+        <button class="l-pre">prepend</button>
+        <button class="l-app">append</button>
+        <button class="l-rem">remove</button>
+        <button class="l-find">find</button>
+      </div>
+      <div class="controls">
+        <label style="font-size:.85rem;color:var(--text-2)">index <input type="number" class="l-idx" value="1" min="0" aria-label="Index for insert" style="width:64px"></label>
+        <button class="l-ins">insert(index, value)</button>
+        <button class="l-rev">reverse</button>
+        <span class="sep"></span>
+        <button class="secondary l-rand">Random</button>
+        <button class="secondary l-reset">Reset</button>
+      </div>
+      <div class="viz">
+        <span class="caption">SinglyLinkedList ll · each box is [value | next]</span>
+        <div class="sll-chain"></div>
+        <div class="sll-vars"></div>
+      </div>
+      <div class="status"></div>
+      <div class="log"></div>
+    </div>
+    <div class="code"></div>
+  </div>
+
+  <p style="font-size:.88rem;color:var(--text-2)">Reading the boxes: <b>●</b> means <code>next</code> points at the neighbouring box (follow the arrow), <b>∅</b> means <code>next</code> is <code>None</code>, and <b>→20</b> (orange) means it points at the node holding 20, which is not drawn next to it. Pointer variables like <code>cur</code> and <code>prev</code> are shown as labels above the nodes.</p>
+
+  <h3>Arrays vs linked lists</h3>
+  <table class="cx">
+    <thead><tr><th></th><th>Array (Python list)</th><th>Linked list</th></tr></thead>
+    <tbody>
+      <tr><td>Access by index</td><td><span class="big o1">O(1)</span></td><td><span class="big on">O(n)</span>, you have to walk the chain</td></tr>
+      <tr><td>Insert/remove at the front</td><td><span class="big on">O(n)</span>, everything shifts</td><td><span class="big o1">O(1)</span></td></tr>
+      <tr><td>Insert after a node you already have</td><td><span class="big on">O(n)</span></td><td><span class="big o1">O(1)</span>, just change pointers</td></tr>
+      <tr><td>Memory</td><td>Compact</td><td>Extra pointer per node</td></tr>
+    </tbody>
+  </table>
+
+  <h3>How it works: key techniques</h3>
+  <ul>
+    <li><b><code>insert(index, value)</code></b>: walk to the node <i>before</i> the position, then change pointers: <code>cur.next = Node(value, cur.next)</code>. The new node grabs the old <code>next</code> first, so nothing is lost.</li>
+    <li><b><code>remove(value)</code></b>: keep track of <code>prev</code> so you can bypass the removed node: <code>prev.next = cur.next</code>. If there is no <code>prev</code>, the node is the head, so <code>head</code> moves instead.</li>
+    <li><b><code>reverse()</code></b>: the classic interview question. Walk the list once and flip each pointer backwards with <code>cur.next, prev, cur = prev, cur, cur.next</code>.</li>
+  </ul>
+  <div class="callout tip"><b>Why the one-line swap works:</b> Python evaluates the whole right side <code>(prev, cur, cur.next)</code> <i>before</i> assigning anything. So the old <code>cur.next</code> is saved even though <code>cur.next</code> is overwritten in the same line. Press <b>reverse</b> and watch the three labels move.</div>
+  <div class="callout warn"><b>No tail pointer:</b> this class only stores <code>head</code>, so <code>append</code> must walk the whole chain to find the last node. Keeping a <code>tail</code> reference would make it O(1).</div>
+
+  <table class="cx">
+    <thead><tr><th>Operation</th><th>Cost</th><th>Why</th></tr></thead>
+    <tbody>
+      <tr><td><code>prepend</code></td><td><span class="big o1">O(1)</span></td><td>new node points at the old head; head moves</td></tr>
+      <tr><td><code>append</code></td><td><span class="big on">O(n)</span></td><td>no tail pointer, so walk to the end</td></tr>
+      <tr><td><code>insert</code>, <code>remove</code>, <code>find</code></td><td><span class="big on">O(n)</span></td><td>walking to the position or value; the relink itself is O(1)</td></tr>
+      <tr><td><code>reverse</code></td><td><span class="big on">O(n)</span> time, <span class="big o1">O(1)</span> extra space</td><td>one pass, three pointer variables</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Where it shows up</h3>
+  <ul>
+    <li>The building block for stacks and queues when you want guaranteed O(1) at the front.</li>
+    <li>Chains of entries in hash table buckets (separate chaining, see Hash Table).</li>
+    <li>Immutable lists in functional languages (Lisp, Haskell): prepending shares the rest of the list.</li>
+    <li>Interview questions: reverse a list, detect a cycle, find the middle node.</li>
+  </ul>
+
+  <div class="quizbox"></div>
+</section>
+<script>
+(() => {
+  const root = document.getElementById("sll");
+  const $ = s => root.querySelector(s);
+  const { el, esc } = DS;
+
+  const SRC = `class Node:
+    def __init__(self, value, next=None):
+        self.value = value
+        self.next = next
+
+
+class SinglyLinkedList:
+    def __init__(self):
+        self.head = None
+        self._size = 0
+
+    def prepend(self, value):
+        self.head = Node(value, self.head)
+        self._size += 1
+
+    def append(self, value):
+        new = Node(value)
+        if self.head is None:
+            self.head = new
+        else:
+            cur = self.head
+            while cur.next:
+                cur = cur.next
+            cur.next = new
+        self._size += 1
+
+    def insert(self, index, value):
+        if index < 0 or index > self._size:
+            raise IndexError("index out of range")
+        if index == 0:
+            self.prepend(value)
+            return
+        cur = self.head
+        for _ in range(index - 1):
+            cur = cur.next
+        cur.next = Node(value, cur.next)
+        self._size += 1
+
+    def remove(self, value):
+        prev, cur = None, self.head
+        while cur:
+            if cur.value == value:
+                if prev:
+                    prev.next = cur.next
+                else:
+                    self.head = cur.next
+                self._size -= 1
+                return True
+            prev, cur = cur, cur.next
+        return False
+
+    def find(self, value):
+        for i, v in enumerate(self):
+            if v == value:
+                return i
+        return -1
+
+    def reverse(self):
+        prev, cur = None, self.head
+        while cur:
+            cur.next, prev, cur = prev, cur, cur.next
+        self.head = prev
+
+    def __iter__(self):
+        cur = self.head
+        while cur:
+            yield cur.value
+            cur = cur.next`;
+
+  const cp = DS.code($(".code"), SRC, "data_structures.py — Node + SinglyLinkedList");
+  // Line number of the first line containing `sub` at or after the first line containing `start`.
+  const L = (start, sub) => {
+    const s = cp.lines.findIndex(l => l.includes(start));
+    return cp.lines.findIndex((l, j) => j >= s && l.includes(sub)) + 1;
+  };
+
+  const valIn = $(".l-val"), idxIn = $(".l-idx"), viz = $(".viz");
+  const chainEl = $(".sll-chain"), varsEl = $(".sll-vars");
+  const statusEl = $(".status"), logEl = $(".log");
+  const MAX = 9;
+
+  // Model: nodes by id, each { id, v, next: id | null }. `order` is the left-to-right drawing order.
+  let uid = 0, nodes = new Map(), head = null, order = [], size = 0;
+  const mk = (v, next = null) => { const id = uid++; nodes.set(id, { id, v, next }); return id; };
+  const fmt = v => (typeof v === "string" ? `'${v}'` : String(v));
+  const val = id => (id == null ? "None" : fmt(nodes.get(id).v));
+  const say = t => (statusEl.textContent = t);
+  const shake = e => e.animate(
+    [{ transform: "translateX(0)" }, { transform: "translateX(-7px)" }, { transform: "translateX(7px)" },
+     { transform: "translateX(-4px)" }, { transform: "translateX(0)" }], { duration: 360 });
+  function fail(msg) { say("✗ " + msg); DS.log(logEl, esc(msg), "err"); shake(viz); }
+
+  function chain() {
+    const out = [], seen = new Set();
+    let c = head;
+    while (c != null && !seen.has(c)) { seen.add(c); out.push(c); c = nodes.get(c).next; }
+    return out;
+  }
+  const repr = () => {
+    const c = chain();
+    return c.length ? c.map(id => String(nodes.get(id).v)).join(" -> ") + " -> None" : "None";
+  };
+  // Class map: every id in `visited` gets "visited", then `extra` overrides.
+  const C = (visited, extra) => {
+    const c = {};
+    for (const id of visited) c[id] = "visited";
+    return Object.assign(c, extra || {});
+  };
+
+  // o.ptr: { name: id|null } pointer labels; o.cls: { id: "classes" }; o.hot: ids whose next-arrow is highlighted;
+  // o.rev: mid-reverse drawing (hide [i] positions, show "None ←" before the first node). Returns Map id -> node element.
+  function render(o = {}) {
+    const ptr = o.ptr || {}, cls = o.cls || {}, hot = new Set(o.hot || []);
+    const tags = new Map();
+    const addTag = (id, html) => {
+      if (id == null) return;
+      if (!tags.has(id)) tags.set(id, []);
+      tags.get(id).push(html);
+    };
+    addTag(head, "head");
+    for (const [k, id] of Object.entries(ptr)) addTag(id, `<span class="sll-ptr">${esc(k)}</span>`);
+    const pos = new Map(chain().map((id, i) => [id, i]));
+    const dom = new Map();
+    const arrow = (ch, isHot) => el("span", { class: "sll-arr" + (isHot ? " hot" : ""), "aria-hidden": "true" }, ch);
+    const nil = () => el("div", { class: "node sll-nil" }, "None");
+    chainEl.innerHTML = "";
+
+    if (!order.length) {
+      const b = nil();
+      b.append(el("span", { class: "tag" }, "head"));
+      chainEl.append(el("div", { class: "sll-unit" }, b));
+    }
+    order.forEach((id, i) => {
+      const n = nodes.get(id);
+      const unit = el("div", { class: "sll-unit" });
+      // First drawn node pointing to None (happens while/after reversing): draw "None ←" before it.
+      if (o.rev && i === 0 && n.next == null && order.length > 1) unit.append(nil(), arrow("←", hot.has(id)));
+      const adj = n.next != null && (n.next === order[i + 1] || n.next === order[i - 1]);
+      const pc = n.next == null ? "∅" : adj ? "●" : "→" + String(nodes.get(n.next).v);
+      const box = el("div", { class: "node sll-n" + (cls[id] ? " " + cls[id] : "") },
+        el("span", { class: "sll-v" }, String(n.v)),
+        el("span", { class: "sll-p" + (n.next != null && !adj ? " far" : ""), title: "next" }, pc));
+      if (tags.has(id)) box.append(el("span", { class: "tag", html: tags.get(id).join(" · ") }));
+      if (!o.rev && pos.has(id)) box.append(el("span", { class: "sub" }, "[" + pos.get(id) + "]"));
+      dom.set(id, box);
+      unit.append(box);
+      if (i < order.length - 1) {
+        const nb = order[i + 1];
+        if (n.next === nb) unit.append(arrow("→", hot.has(id)));
+        else if (nodes.get(nb).next === id) unit.append(arrow("←", hot.has(nb)));
+        else unit.append(el("span", { class: "sll-arr" }, ""));
+      } else if (n.next == null) {
+        unit.append(arrow("→", hot.has(id)), nil());
+      }
+      chainEl.append(unit);
+    });
+
+    const nm = id => (id == null ? "None" : `Node(${String(nodes.get(id).v)})`);
+    const parts = [`head → ${nm(head)}`, `_size = ${size}`]
+      .concat(Object.entries(ptr).map(([k, id]) => `${k} → ${nm(id)}`));
+    varsEl.innerHTML = esc(parts.join("   ")) + "<br>" + esc("ll = " + repr());
+    return dom;
+  }
+
+  function full() {
+    if (order.length >= MAX) { fail(`Demo limit of ${MAX} nodes (a real linked list can keep growing).`); return true; }
+    return false;
+  }
+
+  function readVal() {
+    const vals = DS.parseVals(valIn.value);
+    valIn.value = "";
+    if (!vals.length) return null;
+    const v = vals[0];
+    return typeof v === "string" ? v.slice(0, 5) : v;
+  }
+  const randVal = () => DS.randInt(1, 99);
+
+  async function prepend(v, quiet) {
+    if (full()) return;
+    cp.hl(L("def prepend", "def prepend"));
+    say(`prepend(${fmt(v)}): the new node goes in front of the current head.`);
+    await DS.wait(0.6);
+    cp.hl(L("def prepend", "self.head = Node(value, self.head)"), L("class Node", "def __init__"), L("class Node", "self.next = next"));
+    const old = head;
+    const id = mk(v, head);
+    order.unshift(id);
+    render({ cls: { [id]: "new active" }, hot: [id] });
+    say(`Node(${fmt(v)}, self.head) is built with next already pointing at the old head (${val(old)}).`);
+    await DS.wait();
+    head = id;
+    render({ cls: { [id]: "active" } });
+    say(`Then self.head moves to the new node. No other node was touched: O(1).`);
+    await DS.wait(0.8);
+    cp.hl(L("def prepend", "self._size += 1"));
+    size++;
+    render({ cls: { [id]: "found" } });
+    if (!quiet) DS.log(logEl, `prepend(${esc(fmt(v))}) → ${esc(repr())}`, "ok");
+    say(`prepend(${fmt(v)}) done. ll = ${repr()}`);
+  }
+
+  async function append(v) {
+    if (full()) return;
+    cp.hl(L("def append", "def append"));
+    say(`append(${fmt(v)}): add a node at the end. There is no tail pointer, so we must find the end.`);
+    await DS.wait(0.6);
+    cp.hl(L("def append", "new = Node(value)"));
+    const id = mk(v);
+    order.push(id);
+    render({ ptr: { new: id }, cls: { [id]: "new" } });
+    say(`new = Node(${fmt(v)}): a lone node whose next is None. It is not linked in yet.`);
+    await DS.wait();
+    cp.hl(L("def append", "if self.head is None"));
+    say(`Is the list empty (head is None)? ${head == null ? "Yes." : "No."}`);
+    await DS.wait(0.6);
+    if (head == null) {
+      cp.hl(L("def append", "self.head = new"));
+      head = id;
+      render({ ptr: { new: id }, cls: { [id]: "found" } });
+      say("The list was empty, so the new node simply becomes the head.");
+      await DS.wait();
+    } else {
+      const visited = [];
+      let cur = head, steps = 0;
+      cp.hl(L("def append", "cur = self.head"));
+      render({ ptr: { new: id, cur }, cls: { [cur]: "active" } });
+      say(`cur = self.head: start walking at ${val(cur)}.`);
+      await DS.wait();
+      for (;;) {
+        const nx = nodes.get(cur).next;
+        cp.hl(L("def append", "while cur.next:"));
+        render({ ptr: { new: id, cur }, cls: C(visited, { [cur]: "active" }), hot: [cur] });
+        say(`while cur.next: cur.next is ${val(nx)}${nx == null ? ", so stop. cur is the last node." : ", so keep walking."}`);
+        await DS.wait(0.7);
+        if (nx == null) break;
+        cp.hl(L("def append", "cur = cur.next"));
+        visited.push(cur);
+        cur = nx;
+        steps++;
+        render({ ptr: { new: id, cur }, cls: C(visited, { [cur]: "active" }) });
+        say(`cur = cur.next → ${val(cur)}`);
+        await DS.wait(0.6);
+      }
+      cp.hl(L("def append", "cur.next = new"));
+      nodes.get(cur).next = id;
+      render({ ptr: { new: id, cur }, cls: C(visited, { [cur]: "active", [id]: "found" }), hot: [cur] });
+      say(`cur.next = new: ${val(cur)} now points at ${fmt(v)}. That took ${steps} step(s) of walking: O(n).`);
+      await DS.wait();
+    }
+    cp.hl(L("def append", "self._size += 1"));
+    size++;
+    render({ cls: { [id]: "found" } });
+    DS.log(logEl, `append(${esc(fmt(v))}) → ${esc(repr())}`, "ok");
+    say(`append(${fmt(v)}) done. ll = ${repr()}`);
+  }
+
+  async function insert(index, v) {
+    cp.hl(L("def insert", "def insert"), L("def insert", "if index < 0 or index > self._size"));
+    say(`insert(${index}, ${fmt(v)}): first check 0 ≤ index ≤ _size (${size}).`);
+    await DS.wait(0.6);
+    if (!Number.isInteger(index) || index < 0 || index > size) {
+      cp.hl(L("def insert", "raise IndexError"));
+      fail(`IndexError: index out of range (insert(${index}, …) with _size = ${size}; valid is 0..${size})`);
+      return;
+    }
+    if (full()) return;
+    cp.hl(L("def insert", "if index == 0:"));
+    await DS.wait(0.5);
+    if (index === 0) {
+      cp.hl(L("def insert", "if index == 0:"), L("def insert", "self.prepend(value)"));
+      say("index is 0, so the new node becomes the head: insert() just calls prepend().");
+      await DS.wait(0.8);
+      await prepend(v, true);
+      cp.hl(L("def insert", "return"));
+      DS.log(logEl, `insert(0, ${esc(fmt(v))}) via prepend → ${esc(repr())}`, "ok");
+      return;
+    }
+    const visited = [];
+    let cur = head;
+    cp.hl(L("def insert", "cur = self.head"));
+    render({ ptr: { cur }, cls: { [cur]: "active" } });
+    say(`Walk to the node just BEFORE position ${index}, i.e. take ${index - 1} step(s) from head.`);
+    await DS.wait();
+    for (let k = 0; k < index - 1; k++) {
+      cp.hl(L("def insert", "for _ in range(index - 1)"), L("def insert", "cur = cur.next"));
+      visited.push(cur);
+      cur = nodes.get(cur).next;
+      render({ ptr: { cur }, cls: C(visited, { [cur]: "active" }) });
+      say(`Step ${k + 1} of ${index - 1}: cur = cur.next → ${val(cur)}`);
+      await DS.wait(0.7);
+    }
+    cp.hl(L("def insert", "cur.next = Node(value, cur.next)"), L("class Node", "self.next = next"));
+    const after = nodes.get(cur).next;
+    const id = mk(v, after);
+    order.splice(order.indexOf(cur) + 1, 0, id);
+    render({ ptr: { cur }, cls: C(visited, { [cur]: "active", [id]: "new active" }), hot: [id] });
+    say(`Right side first: Node(${fmt(v)}, cur.next) points at ${val(after)}. cur still points past it (shown as the orange →).`);
+    await DS.wait(1.2);
+    nodes.get(cur).next = id;
+    render({ ptr: { cur }, cls: C(visited, { [cur]: "active", [id]: "found" }), hot: [cur] });
+    say(`Then cur.next = the new node. Two pointer writes, nothing shifted.`);
+    await DS.wait();
+    cp.hl(L("def insert", "self._size += 1"));
+    size++;
+    render({ cls: { [id]: "found" } });
+    DS.log(logEl, `insert(${index}, ${esc(fmt(v))}) → ${esc(repr())}`, "ok");
+    say(`insert(${index}, ${fmt(v)}) done. ll = ${repr()}`);
+  }
+
+  async function remove(v) {
+    cp.hl(L("def remove", "def remove"), L("def remove", "prev, cur = None, self.head"));
+    const visited = [];
+    let prev = null, cur = head;
+    render({ ptr: { prev, cur }, cls: cur == null ? {} : { [cur]: "active" } });
+    say(`remove(${fmt(v)}): prev = None, cur = head (${val(cur)}). prev trails one node behind cur.`);
+    await DS.wait();
+    for (;;) {
+      cp.hl(L("def remove", "while cur:"));
+      say(cur == null ? "while cur: cur is None, the walk fell off the end." : `while cur: cur is ${val(cur)}, keep going.`);
+      await DS.wait(0.5);
+      if (cur == null) break;
+      cp.hl(L("def remove", "if cur.value == value"));
+      render({ ptr: { prev, cur }, cls: C(visited, { [cur]: "active" }) });
+      say(`Is ${val(cur)} == ${fmt(v)}?`);
+      await DS.wait(0.7);
+      if (nodes.get(cur).v === v) {
+        render({ ptr: { prev, cur }, cls: C(visited, { [cur]: "found" }) });
+        say(`Match! Now unlink ${val(cur)}.`);
+        await DS.wait(0.6);
+        const nx = nodes.get(cur).next;
+        if (prev != null) {
+          cp.hl(L("def remove", "if prev:"), L("def remove", "prev.next = cur.next"));
+          nodes.get(prev).next = nx;
+          render({ ptr: { prev, cur }, cls: C(visited, { [prev]: "active", [cur]: "bad" }), hot: [prev] });
+          say(`prev.next = cur.next: ${val(prev)} now points to ${val(nx)}, skipping ${val(cur)}.`);
+        } else {
+          cp.hl(L("def remove", "if prev:"), L("def remove", "self.head = cur.next"));
+          head = nx;
+          render({ ptr: { prev, cur }, cls: { [cur]: "bad" } });
+          say(`prev is None, so cur is the head: self.head = cur.next (${val(nx)}).`);
+        }
+        await DS.wait(1.3);
+        cp.hl(L("def remove", "self._size -= 1"), L("def remove", "return True"));
+        size--;
+        const d = render({ ptr: { prev, cur }, cls: { [cur]: "bad" } });
+        d.get(cur).classList.add("removed");
+        say(`Nothing points at ${val(cur)} any more, so Python's garbage collector reclaims it. Return True.`);
+        await DS.wait(0.6);
+        const removedVal = val(cur);
+        order = order.filter(x => x !== cur);
+        nodes.delete(cur);
+        render();
+        DS.log(logEl, `remove(${esc(removedVal)}) = True → ${esc(repr())}`, "ok");
+        say(`remove(${removedVal}) returned True. ll = ${repr()}`);
+        return;
+      }
+      cp.hl(L("def remove", "prev, cur = cur, cur.next"));
+      visited.push(cur);
+      prev = cur;
+      cur = nodes.get(cur).next;
+      render({ ptr: { prev, cur }, cls: C(visited, cur == null ? {} : { [cur]: "active" }) });
+      say(`No match: advance both. prev = ${val(prev)}, cur = ${val(cur)}.`);
+      await DS.wait(0.7);
+    }
+    cp.hl(L("def remove", "return False"));
+    render({ ptr: { prev, cur }, cls: C(visited) });
+    fail(size === 0
+      ? `remove(${fmt(v)}) returned False: the list is empty (head is None).`
+      : `remove(${fmt(v)}) returned False: ${fmt(v)} is not in the list (checked all ${size} nodes).`);
+  }
+
+  async function find(v) {
+    cp.hl(L("def find", "def find"), L("def find", "for i, v in enumerate(self)"));
+    say(`find(${fmt(v)}): enumerate(self) uses __iter__, which walks the nodes from head.`);
+    await DS.wait(0.6);
+    cp.hl(L("def find", "for i, v in enumerate(self)"), L("def __iter__", "cur = self.head"));
+    const visited = [];
+    let cur = head, i = 0;
+    render({ ptr: { cur }, cls: cur == null ? {} : { [cur]: "active" } });
+    await DS.wait(0.6);
+    for (;;) {
+      cp.hl(L("def find", "for i, v in enumerate(self)"), L("def __iter__", "while cur:"));
+      if (cur == null) {
+        say("__iter__: cur is None, so the loop ends. The value was never seen.");
+        await DS.wait(0.6);
+        break;
+      }
+      cp.hl(L("def find", "for i, v in enumerate(self)"), L("def __iter__", "yield cur.value"));
+      render({ ptr: { cur }, cls: C(visited, { [cur]: "active" }) });
+      say(`__iter__ yields ${val(cur)}, so i = ${i}, v = ${val(cur)}.`);
+      await DS.wait(0.6);
+      cp.hl(L("def find", "if v == value"));
+      say(`Is ${val(cur)} == ${fmt(v)}?`);
+      await DS.wait(0.6);
+      if (nodes.get(cur).v === v) {
+        cp.hl(L("def find", "return i"));
+        render({ ptr: { cur }, cls: C(visited, { [cur]: "found" }) });
+        DS.log(logEl, `find(${esc(fmt(v))}) = ${i}`, "ok");
+        say(`Found: find(${fmt(v)}) returns index ${i}. It took ${i + 1} comparison(s): O(n), no jumping to an index.`);
+        await DS.wait(1.4);
+        render();
+        return;
+      }
+      cp.hl(L("def __iter__", "cur = cur.next"));
+      visited.push(cur);
+      cur = nodes.get(cur).next;
+      i++;
+      render({ ptr: { cur }, cls: C(visited, cur == null ? {} : { [cur]: "active" }) });
+      await DS.wait(0.5);
+    }
+    cp.hl(L("def find", "return -1"));
+    render({ cls: C(visited) });
+    fail(size === 0
+      ? `find(${fmt(v)}) returned -1: the list is empty.`
+      : `find(${fmt(v)}) returned -1: ${fmt(v)} is not in the list.`);
+  }
+
+  async function reverse() {
+    cp.hl(L("def reverse", "def reverse"), L("def reverse", "prev, cur = None, self.head"));
+    if (head == null) {
+      await DS.wait(0.5);
+      cp.hl(L("def reverse", "while cur:"), L("def reverse", "self.head = prev"));
+      fail("The list is empty: reverse() has nothing to flip, head stays None.");
+      return;
+    }
+    const visited = [];
+    let prev = null, cur = head;
+    render({ ptr: { prev, cur }, cls: { [cur]: "active" }, rev: true });
+    say("Start: prev = None, cur = head. Each step flips one next pointer to point backwards.");
+    await DS.wait();
+    while (cur != null) {
+      cp.hl(L("def reverse", "while cur:"));
+      render({ ptr: { prev, cur }, cls: C(visited, { [cur]: "active" }), rev: true });
+      await DS.wait(0.4);
+      const nxt = nodes.get(cur).next;
+      cp.hl(L("def reverse", "cur.next, prev, cur = prev, cur, cur.next"));
+      render({ ptr: { prev, cur, "cur.next": nxt }, cls: C(visited, { [cur]: "active" }), hot: [cur], rev: true });
+      say(`Right side is evaluated first: (prev, cur, cur.next) = (${val(prev)}, ${val(cur)}, ${val(nxt)}). The old cur.next is saved.`);
+      await DS.wait(1.1);
+      nodes.get(cur).next = prev;
+      render({ ptr: { prev, cur, "old cur.next": nxt }, cls: C(visited, { [cur]: "active" }), hot: [cur], rev: true });
+      say(`cur.next = prev: ${val(cur)} now points back to ${val(prev)}.`);
+      await DS.wait();
+      visited.push(cur);
+      prev = cur;
+      cur = nxt;
+      render({ ptr: { prev, cur }, cls: C(visited, cur == null ? {} : { [cur]: "active" }), rev: true });
+      say(`prev = ${val(prev)}, cur = ${val(cur)}: both step forward.`);
+      DS.log(logEl, `flipped ${esc(val(prev))}.next; prev = ${esc(val(prev))}, cur = ${esc(val(cur))}`, "info");
+      await DS.wait(0.7);
+    }
+    cp.hl(L("def reverse", "while cur:"));
+    say("cur is None: every pointer is flipped. prev is the old last node.");
+    await DS.wait(0.6);
+    cp.hl(L("def reverse", "self.head = prev"));
+    head = prev;
+    render({ ptr: { prev }, cls: { [head]: "found" }, rev: true });
+    say(`self.head = prev: the old last node (${val(head)}) is the new head.`);
+    await DS.wait();
+    order.reverse();
+    render({ cls: { [head]: "found" } });
+    DS.log(logEl, `reverse() → ${esc(repr())}`, "ok");
+    say(`Redrawn left to right: ll = ${repr()}. O(n) time, only three extra variables.`);
+  }
+
+  function build(vals) {
+    nodes = new Map(); head = null;
+    let next = null;
+    for (let i = vals.length - 1; i >= 0; i--) next = mk(vals[i], next);
+    head = next;
+    order = chain();
+    size = vals.length;
+    render();
+    cp.clear();
+  }
+  function reset() {
+    build([10, 20, 30, 40]);
+    say("Reset: ll = 10 -> 20 -> 30 -> 40 -> None.");
+    DS.log(logEl, "reset: ll = 10 -> 20 -> 30 -> 40 -> None", "info");
+  }
+  function randomList() {
+    const vals = [];
+    const n = DS.randInt(3, 5);
+    while (vals.length < n) { const v = randVal(); if (!vals.includes(v)) vals.push(v); }
+    build(vals);
+    say(`Random list: ll = ${repr()}.`);
+    DS.log(logEl, `random: ll = ${esc(repr())}`, "info");
+  }
+
+  // Operations that need a value: an empty box means a random value for adds, an error for searches.
+  const needVal = (fn, randomOk) => () => DS.run(root, async () => {
+    let v = readVal();
+    if (v == null) {
+      if (!randomOk) { fail("Type a value first (e.g. one from the list)."); return; }
+      v = randVal();
+    }
+    await fn(v);
+  });
+
+  $(".l-pre").onclick = needVal(v => prepend(v), true);
+  $(".l-app").onclick = needVal(append, true);
+  $(".l-rem").onclick = needVal(remove, false);
+  $(".l-find").onclick = needVal(find, false);
+  $(".l-ins").onclick = () => DS.run(root, async () => {
+    const v = readVal();
+    const idx = idxIn.value.trim() === "" ? NaN : Number(idxIn.value);
+    await insert(idx, v == null ? randVal() : v);
+  });
+  $(".l-rev").onclick = () => DS.run(root, reverse);
+  $(".l-rand").onclick = () => { if (!root.dataset.busy) randomList(); };
+  $(".l-reset").onclick = () => { if (!root.dataset.busy) reset(); };
+  valIn.addEventListener("keydown", e => { if (e.key === "Enter") $(".l-app").click(); });
+  idxIn.addEventListener("keydown", e => { if (e.key === "Enter") $(".l-ins").click(); });
+
+  reset();
+
+  DS.quiz($(".quizbox"), [
+    {
+      q: "Why is <code>append</code> O(n) in this class while <code>prepend</code> is O(1)?",
+      options: ["Appending allocates more memory", "There is no tail pointer, so append walks to the last node", "Python lists are slow at the end", "append copies every node"],
+      answer: 1,
+      why: "The list only stores <code>head</code>. To link a node at the end, <code>append</code> follows <code>cur.next</code> until it is None. Storing a <code>tail</code> reference would make it O(1)."
+    },
+    {
+      q: "In <code>remove()</code>, why does the loop keep a <code>prev</code> variable?",
+      options: ["To count the nodes", "To set prev.next = cur.next and bypass the removed node", "To walk the list backwards", "Because Python requires two loop variables"],
+      answer: 1,
+      why: "Nodes only point forward. To cut <code>cur</code> out, the node <i>before</i> it must be rewired, and you can't go back to it from <code>cur</code>."
+    },
+    {
+      q: "The list is <code>1 -> 2 -> 3 -> None</code>. After ONE pass of the <code>while</code> loop in <code>reverse()</code>, what are <code>prev</code> and <code>cur</code>?",
+      options: ["prev = None, cur = 1", "prev = 1, cur = 2", "prev = 2, cur = 3", "prev = 3, cur = None"],
+      answer: 1,
+      why: "The first pass sets <code>1.next = None</code>, then <code>prev</code> moves to 1 and <code>cur</code> to 2 (the saved old <code>1.next</code>)."
+    }
+  ]);
+})();
+</script>
+
+
+<section class="section" id="bst" data-title="4. Binary Search Tree">
+  <style>
+    #bst svg.tree { max-width: none; margin: 0 auto; overflow: visible; }
+    #bst .svg-node.removed circle { stroke: var(--bad); stroke-dasharray: 5 3; fill: color-mix(in srgb, var(--bad) 18%, var(--surface)); }
+    #bst .svg-node.new circle { animation: bst-pop .45s ease; transform-box: fill-box; transform-origin: center; }
+    #bst .svg-node text.ntag { fill: var(--text-2); font: 700 11px var(--sans); paint-order: stroke; stroke: var(--surface-2); stroke-width: 4px; }
+    #bst .svg-node text.bub { fill: var(--hot); font: 700 12px var(--mono); text-anchor: start; paint-order: stroke; stroke: var(--surface-2); stroke-width: 4px; }
+    #bst svg.tree text.empty { fill: var(--muted); font: 14px var(--sans); text-anchor: middle; }
+    #bst .stats { font: 12.5px var(--mono); color: var(--text-2); margin: 0 0 8px; }
+    #bst .stats b { color: var(--text); }
+    #bst .stats .warn { color: var(--bad); font-weight: 700; }
+    #bst .trav .row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; min-height: 42px; margin-top: 8px; }
+    #bst .trav .lbl { font: 600 .72rem var(--sans); text-transform: uppercase; letter-spacing: .05em; color: var(--muted); width: 58px; flex: none; }
+    #bst .trav .node { min-width: 34px; height: 34px; font-size: 13px; border-radius: 7px; }
+    #bst .trav .row[hidden] { display: none; }
+    #bst .trav .qrow { padding-top: 14px; }
+    #bst .trav .empty { color: var(--muted); font-size: .85rem; }
+    #bst .shake { animation: bst-shake .35s; }
+    @keyframes bst-pop { 0% { transform: scale(.3); } 70% { transform: scale(1.15); } 100% { transform: scale(1); } }
+    @keyframes bst-shake { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-6px); } 75% { transform: translateX(6px); } }
+  </style>
+  <h2>4. Binary Search Tree <small style="color:var(--muted);font-weight:500">(BST)</small></h2>
+  <p class="lead">A binary tree where everything in a node's left subtree is smaller and everything in its right subtree is larger, so every comparison discards half of what's left.</p>
+  <p>Each node has at most two children, and the <b>BST property</b> holds at <em>every</em> node. That makes searching
+    exactly like binary search on a sorted array: at each node you compare once and continue in only one direction.
+    Think of a "guess the number" game where each answer is "higher" or "lower".</p>
+
+  <div class="grid2">
+    <div class="card">
+      <div class="controls">
+        <input type="text" class="key" value="45" aria-label="Key">
+        <button data-op="insert">Insert</button>
+        <button data-op="contains">Contains</button>
+        <button data-op="delete">Delete</button>
+        <span class="sep"></span>
+        <button class="secondary" data-op="height">Height</button>
+      </div>
+      <div class="controls">
+        <button class="secondary" data-op="inorder">In-order</button>
+        <button class="secondary" data-op="preorder">Pre-order</button>
+        <button class="secondary" data-op="level">Level-order</button>
+        <span class="sep"></span>
+        <button class="secondary" data-op="sorted">Insert sorted 1..7</button>
+        <button class="secondary" data-op="balanced">Balanced example</button>
+        <button class="secondary" data-op="random">Random</button>
+        <button class="secondary" data-op="reset">Reset</button>
+      </div>
+      <div class="stats"></div>
+      <div class="viz" style="max-height:540px"><span class="caption">tree · x = in-order position, y = depth</span><svg class="tree"></svg></div>
+      <div class="trav">
+        <div class="row"><span class="lbl">output</span><div class="items out" style="display:contents"><span class="empty">run a traversal to fill this list</span></div></div>
+        <div class="row qrow" hidden><span class="lbl">queue</span><div class="items q" style="display:contents"></div></div>
+      </div>
+      <div class="status"></div>
+      <div class="log"></div>
+    </div>
+    <div class="code"></div>
+  </div>
+
+  <h3>How it works</h3>
+  <ul>
+    <li><b><code>contains(key)</code></b>: start at the root. Go left if the key is smaller, right if it's larger. Stop when you find it or fall off the tree (<code>None</code>).</li>
+    <li><b><code>insert(key)</code></b>: search for the key, then attach a new node exactly where the search fell off. Duplicates are ignored.</li>
+    <li><b><code>delete(key)</code></b> has three cases:
+      <ol>
+        <li><b>Leaf</b>: just remove it.</li>
+        <li><b>One child</b>: replace the node with its only child (the whole subtree moves up).</li>
+        <li><b>Two children</b>: find the <b>in-order successor</b> (the smallest key in the right subtree: go right once, then left as far as possible), copy its key into this node, then delete the successor from the right subtree. The successor never has a left child, so that second delete is always case 1 or 2.</li>
+      </ol>
+    </li>
+  </ul>
+
+  <h3>Traversals</h3>
+  <table class="cx">
+    <thead><tr><th>Traversal</th><th>Order</th><th>For 50,30,70,20,40,60,80</th><th>Use</th></tr></thead>
+    <tbody>
+      <tr><td><b>In-order</b></td><td>left, node, right</td><td><code>20 30 40 50 60 70 80</code></td><td>Visits keys <b>in sorted order</b></td></tr>
+      <tr><td><b>Pre-order</b></td><td>node, left, right</td><td><code>50 30 20 40 70 60 80</code></td><td>Copying or serializing a tree</td></tr>
+      <tr><td><b>Level-order</b></td><td>level by level</td><td><code>50 30 70 20 40 60 80</code></td><td>Uses a <b>Queue</b> (BFS on a tree)</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout warn"><b>Balance matters.</b> The cost of every operation depends on the tree's <b>height</b>, not on the number of nodes.
+    Inserting <code>4,2,6,1,3,5,7</code> gives height 3; inserting the same keys sorted (<code>1..7</code>) gives height 7, which is just a linked list.
+    Try both buttons above. This BST does <b>not</b> rebalance itself; self-balancing trees such as <b>AVL</b> and <b>red-black</b> trees keep the height at O(log n) no matter the insert order.</div>
+
+  <h3>Complexity</h3>
+  <table class="cx">
+    <thead><tr><th>Operation</th><th>Balanced</th><th>Worst case (degenerate)</th></tr></thead>
+    <tbody>
+      <tr><td><code>insert</code>, <code>contains</code>, <code>delete</code></td><td><span class="big olog">O(log n)</span></td><td><span class="big on">O(n)</span></td></tr>
+      <tr><td>Traversals (in-order, pre-order, level-order)</td><td><span class="big on">O(n)</span></td><td><span class="big on">O(n)</span></td></tr>
+      <tr><td><code>height</code></td><td><span class="big on">O(n)</span></td><td><span class="big on">O(n)</span></td></tr>
+    </tbody>
+  </table>
+
+  <h3>Where it shows up</h3>
+  <ul>
+    <li>Ordered maps and sets (e.g. C++ <code>std::map</code>, Java <code>TreeMap</code>, which are red-black trees).</li>
+    <li>Database indexes (B-trees are a wide, balanced generalization of the BST).</li>
+    <li>Range queries and "next larger key" lookups, which a hash table can't do efficiently.</li>
+  </ul>
+
+  <div class="quizbox"></div>
+</section>
+<script>(() => {
+  const root = document.getElementById("bst");
+  const $ = s => root.querySelector(s);
+
+  const SRC = `
+class TreeNode:
+    def __init__(self, key):
+        self.key = key
+        self.left = None
+        self.right = None
+
+
+class BinarySearchTree:
+    def __init__(self):
+        self.root = None
+
+    def insert(self, key):
+        def _insert(node, key):
+            if node is None:
+                return TreeNode(key)
+            if key < node.key:
+                node.left = _insert(node.left, key)
+            elif key > node.key:
+                node.right = _insert(node.right, key)
+            return node
+
+        self.root = _insert(self.root, key)
+
+    def contains(self, key):
+        node = self.root
+        while node:
+            if key == node.key:
+                return True
+            node = node.left if key < node.key else node.right
+        return False
+
+    def delete(self, key):
+        def _min(node):
+            while node.left:
+                node = node.left
+            return node
+
+        def _delete(node, key):
+            if node is None:
+                return None
+            if key < node.key:
+                node.left = _delete(node.left, key)
+            elif key > node.key:
+                node.right = _delete(node.right, key)
+            else:
+                if node.left is None:
+                    return node.right
+                if node.right is None:
+                    return node.left
+                successor = _min(node.right)
+                node.key = successor.key
+                node.right = _delete(node.right, successor.key)
+            return node
+
+        self.root = _delete(self.root, key)
+
+    def inorder(self):
+        def _walk(node):
+            if node:
+                yield from _walk(node.left)
+                yield node.key
+                yield from _walk(node.right)
+
+        return list(_walk(self.root))
+
+    def preorder(self):
+        def _walk(node):
+            if node:
+                yield node.key
+                yield from _walk(node.left)
+                yield from _walk(node.right)
+
+        return list(_walk(self.root))
+
+    def level_order(self):
+        result, q = [], Queue()
+        if self.root:
+            q.enqueue(self.root)
+        while not q.is_empty():
+            node = q.dequeue()
+            result.append(node.key)
+            if node.left:
+                q.enqueue(node.left)
+            if node.right:
+                q.enqueue(node.right)
+        return result
+
+    def height(self):
+        def _h(node):
+            return 0 if node is None else 1 + max(_h(node.left), _h(node.right))
+
+        return _h(self.root)
+`;
+  const cp = DS.code($(".code"), SRC, "data_structures.py · class BinarySearchTree");
+  // 1-based line number of the first line containing `sub` at/after the line containing `anchor`.
+  const ln = (anchor, sub) => {
+    const a = cp.lines.findIndex(l => l.includes(anchor));
+    return cp.lines.findIndex((l, k) => k >= a && l.includes(sub)) + 1;
+  };
+  // Same, but the trimmed line must equal `exact`.
+  const lnX = (anchor, exact) => {
+    const a = cp.lines.findIndex(l => l.includes(anchor));
+    return cp.lines.findIndex((l, k) => k >= a && l.trim() === exact) + 1;
+  };
+
+  const MAX = 31, R = 18, GX = 44, GY = 62, XL = 40, XR = 110, Y0 = 48;
+  const inp = $(".key"), logEl = $(".log"), viz = $(".viz"), outEl = $(".out"), qEl = $(".q"), qRow = $(".qrow");
+  const status = h => ($(".status").innerHTML = h);
+  const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  /* ---------------- model ---------------- */
+  let tree = null, nextId = 1;
+  const mk = key => ({ id: nextId++, key, left: null, right: null });
+  const count = n => (n ? 1 + count(n.left) + count(n.right) : 0);
+  const height = n => (n ? 1 + Math.max(height(n.left), height(n.right)) : 0);
+  const has = key => { let n = tree; while (n) { if (n.key === key) return true; n = key < n.key ? n.left : n.right; } return false; };
+  function insertRaw(key) {
+    if (!tree) { tree = mk(key); return; }
+    let n = tree;
+    while (true) {
+      if (key === n.key) return;
+      const side = key < n.key ? "left" : "right";
+      if (!n[side]) { n[side] = mk(key); return; }
+      n = n[side];
+    }
+  }
+  function nodesList() {
+    const out = [];
+    (function w(n, p) { if (!n) return; out.push([n, p]); w(n.left, n); w(n.right, n); })(tree, null);
+    return out;
+  }
+
+  /* ---------------- view ---------------- */
+  const svg = $("svg.tree");
+  const gEdges = DS.svg("g"), gNodes = DS.svg("g"), gOver = DS.svg("g");
+  svg.append(gEdges, gNodes, gOver);
+  const els = new Map();          // id -> { g, c, t, tag, edge }
+  let pos = new Map();            // id -> {x, y} currently drawn
+  const bubEl = DS.svg("text", { class: "bub", x: R + 4, y: -R - 2 });
+
+  function ensure(n) {
+    let e = els.get(n.id);
+    if (!e) {
+      const c = DS.svg("circle", { r: R }), t = DS.svg("text", {}), tg = DS.svg("text", { class: "ntag", y: -R - 7 });
+      const g = DS.svg("g", { class: "svg-node" }, c, t, tg);
+      const edge = DS.svg("line", { class: "svg-edge" });
+      gNodes.append(g); gEdges.append(edge);
+      e = { g, c, t, tag: tg, edge };
+      els.set(n.id, e);
+    }
+    e.t.textContent = n.key;
+    return e;
+  }
+  function layout() {
+    const tgt = new Map(); let i = 0, maxD = 0;
+    (function walk(n, d) {
+      if (!n) return;
+      walk(n.left, d + 1);
+      tgt.set(n.id, { x: XL + i++ * GX, y: Y0 + d * GY });
+      maxD = Math.max(maxD, d);
+      walk(n.right, d + 1);
+    })(tree, 0);
+    return { tgt, w: Math.max(260, XL + Math.max(0, i - 1) * GX + XR), h: Math.max(140, Y0 + maxD * GY + R + 18) };
+  }
+  function setSize(w, h) {
+    svg.setAttribute("viewBox", `0 0 ${w} ${h}`);
+    svg.setAttribute("width", w); svg.setAttribute("height", h);
+  }
+  function place(P) {
+    for (const [n, p] of nodesList()) {
+      const e = els.get(n.id), a = P.get(n.id);
+      if (!e || !a) continue;
+      e.g.setAttribute("transform", `translate(${a.x},${a.y})`);
+      const b = p && P.get(p.id);
+      if (b) {
+        e.edge.setAttribute("x1", b.x); e.edge.setAttribute("y1", b.y);
+        e.edge.setAttribute("x2", a.x); e.edge.setAttribute("y2", a.y);
+        e.edge.style.display = "";
+      } else e.edge.style.display = "none";
+    }
+  }
+  async function relayout(anim = true) {
+    const nl = nodesList();
+    const ids = new Set(nl.map(([n]) => n.id));
+    for (const [id, e] of [...els]) if (!ids.has(id)) { e.g.remove(); e.edge.remove(); els.delete(id); pos.delete(id); }
+    nl.forEach(([n]) => ensure(n));
+    gOver.innerHTML = "";
+    const { tgt, w, h } = layout();
+    if (!tree) gOver.append(DS.svg("text", { class: "empty", x: w / 2, y: h / 2 }, "empty tree (root = None)"));
+    const prevW = +svg.getAttribute("width") || 0, prevH = +svg.getAttribute("height") || 0;
+    setSize(Math.max(w, prevW), Math.max(h, prevH));
+    const from = new Map();
+    for (const [id, b] of tgt) from.set(id, pos.get(id) || b);
+    if (anim && !reduced) {
+      const dur = 450 / DS.speed;
+      await new Promise(res => {
+        const t0 = performance.now();
+        const step = now => {
+          let k = Math.min(1, (now - t0) / dur);
+          k = k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
+          const P = new Map();
+          for (const [id, b] of tgt) { const a = from.get(id); P.set(id, { x: a.x + (b.x - a.x) * k, y: a.y + (b.y - a.y) * k }); }
+          place(P);
+          if (k < 1) requestAnimationFrame(step); else res();
+        };
+        requestAnimationFrame(step);
+      });
+    }
+    place(tgt); pos = tgt; setSize(w, h);
+    updateStats();
+  }
+  function updateStats() {
+    const n = count(tree), h = height(tree), best = n ? Math.ceil(Math.log2(n + 1)) : 0;
+    let extra = "";
+    if (n >= 3 && h === n) extra = ` · <span class="warn">degenerate: every node has at most one child, so this is a linked list</span>`;
+    else if (n >= 3 && h > best + 1) extra = ` · <span class="warn">unbalanced</span>`;
+    else if (n >= 3) extra = " · balanced enough";
+    $(".stats").innerHTML = `n = <b>${n}</b> nodes · height = <b>${h}</b> · minimum possible height for ${n} nodes = ${best}${extra}`;
+  }
+
+  const STATES = ["active", "found", "visited", "removed", "new"];
+  function mark(id, cls) { const e = els.get(id); if (!e) return; e.g.classList.remove(...STATES); if (cls) e.g.classList.add(...cls.split(" ")); }
+  function edge(id, cls) { const e = els.get(id); if (!e) return; e.edge.classList.remove("active", "found"); if (cls) e.edge.classList.add(cls); }
+  function tag(id, txt) { const e = els.get(id); if (e) e.tag.textContent = txt || ""; }
+  function bubble(id, txt) {
+    if (id == null) { bubEl.remove(); return; }
+    const e = els.get(id); if (!e) return;
+    bubEl.textContent = txt; e.g.append(bubEl); gNodes.append(e.g);
+  }
+  function clearMarks() { for (const id of els.keys()) { mark(id); edge(id); tag(id); } bubble(null); cp.clear(); }
+  function fail(msg) {
+    status(`<b style="color:var(--bad)">Error:</b> ${msg}`);
+    DS.log(logEl, msg, "err");
+    viz.classList.remove("shake"); void viz.offsetWidth; viz.classList.add("shake");
+  }
+  function clearOutput(withQueue) {
+    outEl.innerHTML = ""; qEl.innerHTML = ""; qRow.hidden = !withQueue;
+  }
+  // tree changed: any previous traversal output is stale
+  function resetOutput() {
+    clearOutput(false);
+    outEl.append(DS.el("span", { class: "empty" }, "run a traversal to fill this list"));
+  }
+  const lt = (a, b) => (a < b ? "&lt;" : "&gt;");
+  const ltp = (a, b) => (a < b ? "<" : ">");
+
+  /* ---------------- operations ---------------- */
+  async function aInsert(key, f = 1) {
+    if (count(tree) >= MAX && !has(key)) { fail(`The tree is full (max ${MAX} nodes in this demo).`); return false; }
+    resetOutput();
+    clearMarks();
+    cp.hl(ln("def insert", "self.root = _insert"));
+    status(`insert(${key}): start at the root`);
+    await DS.wait(f * 0.5);
+    let n = tree, parent = null, side = null, steps = 0;
+    while (n) {
+      mark(n.id, "active");
+      if (key === n.key) {
+        cp.hl(lnX("def insert", "return node"));
+        bubble(n.id, `${key} == ${n.key}`);
+        mark(n.id, "found");
+        status(`${key} == ${n.key} → already in the tree. Neither branch matches, so <code>_insert</code> just returns the node: duplicates are ignored.`);
+        DS.log(logEl, `insert(${key}) → duplicate, ignored`, "info");
+        return true;
+      }
+      const goLeft = key < n.key; steps++;
+      cp.hl(ln("def insert", goLeft ? "if key < node.key" : "elif key > node.key"), ln("def insert", goLeft ? "node.left = _insert" : "node.right = _insert"));
+      bubble(n.id, `${key} ${ltp(key, n.key)} ${n.key} → ${goLeft ? "left" : "right"}`);
+      status(`<b>${key} ${lt(key, n.key)} ${n.key}</b> → go ${goLeft ? "left" : "right"}`);
+      await DS.wait(f);
+      mark(n.id, "visited");
+      parent = n; side = goLeft ? "left" : "right"; n = n[side];
+      if (n) edge(n.id, "active");
+    }
+    bubble(null);
+    cp.hl(ln("def insert", "if node is None"), ln("def insert", "return TreeNode(key)"));
+    const nn = mk(key);
+    if (parent) parent[side] = nn; else tree = nn;
+    status(parent ? `Reached the empty <b>${side}</b> slot of ${parent.key} (node is None) → attach a new TreeNode(${key}) there.`
+                  : `The tree is empty → TreeNode(${key}) becomes the root.`);
+    await relayout();
+    mark(nn.id, "found new");
+    if (parent) edge(nn.id, "found");
+    DS.log(logEl, `insert(${key}) → placed at depth ${steps} after ${steps} comparison${steps === 1 ? "" : "s"}`, "ok");
+    return true;
+  }
+
+  async function aContains(key) {
+    clearMarks();
+    cp.hl(ln("def contains", "node = self.root"));
+    status(`contains(${key}): node = root`);
+    await DS.wait(0.5);
+    let n = tree, steps = 0;
+    while (n) {
+      cp.hl(ln("def contains", "while node:"), ln("def contains", "if key == node.key"));
+      mark(n.id, "active"); steps++;
+      if (key === n.key) {
+        cp.hl(ln("def contains", "if key == node.key"), ln("def contains", "return True"));
+        mark(n.id, "found"); bubble(n.id, `${key} == ${n.key}`);
+        status(`<b>${key} == ${n.key}</b> → found it after ${steps} comparison${steps === 1 ? "" : "s"}. Return True.`);
+        DS.log(logEl, `contains(${key}) → True (${steps} comparisons, height ${height(tree)})`, "ok");
+        return;
+      }
+      const goLeft = key < n.key;
+      cp.hl(ln("def contains", "node = node.left if"));
+      bubble(n.id, `${key} ${ltp(key, n.key)} ${n.key} → ${goLeft ? "left" : "right"}`);
+      status(`<b>${key} ${lt(key, n.key)} ${n.key}</b> → go ${goLeft ? "left" : "right"}`);
+      await DS.wait();
+      mark(n.id, "visited");
+      n = goLeft ? n.left : n.right;
+      if (n) edge(n.id, "active");
+    }
+    bubble(null);
+    cp.hl(ln("def contains", "while node:"), ln("def contains", "return False"));
+    status(`Fell off the tree (node is None) → ${key} is not here. Return False.`);
+    DS.log(logEl, `contains(${key}) → False (${steps} comparisons)`, "info");
+  }
+
+  async function aDelete(key) {
+    resetOutput();
+    clearMarks();
+    cp.hl(ln("def delete", "self.root = _delete"));
+    status(`delete(${key}): first find it`);
+    await DS.wait(0.5);
+    let n = tree, parent = null, side = null;
+    while (n && n.key !== key) {
+      mark(n.id, "active");
+      const goLeft = key < n.key;
+      cp.hl(ln("def _delete", goLeft ? "if key < node.key" : "elif key > node.key"), ln("def _delete", goLeft ? "node.left = _delete" : "node.right = _delete"));
+      bubble(n.id, `${key} ${ltp(key, n.key)} ${n.key} → ${goLeft ? "left" : "right"}`);
+      status(`<b>${key} ${lt(key, n.key)} ${n.key}</b> → go ${goLeft ? "left" : "right"}`);
+      await DS.wait();
+      mark(n.id, "visited");
+      parent = n; side = goLeft ? "left" : "right"; n = n[side];
+      if (n) edge(n.id, "active");
+    }
+    bubble(null);
+    if (!n) {
+      cp.hl(ln("def _delete", "if node is None"), ln("def _delete", "return None"));
+      fail(`delete(${key}): key not found, nothing to delete.`);
+      return;
+    }
+    const setChild = child => { if (parent) parent[side] = child; else tree = child; };
+    mark(n.id, "active"); bubble(n.id, "found");
+    cp.hl(ln("def _delete", "else:"));
+    status(`Found ${key}. Which case is it? It has ${(n.left ? 1 : 0) + (n.right ? 1 : 0)} child(ren).`);
+    await DS.wait();
+    bubble(null);
+
+    if (!n.left && !n.right) {
+      cp.hl(ln("def _delete", "if node.left is None"), ln("def _delete", "return node.right"));
+      mark(n.id, "removed"); tag(n.id, "leaf");
+      status(`<b>Case 1: leaf.</b> No children, so just remove it: <code>return node.right</code> returns None to the parent.`);
+      await DS.wait(1.3);
+      setChild(null);
+      await relayout();
+      DS.log(logEl, `delete(${key}) → case 1 (leaf): removed`, "ok");
+    } else if (!n.left || !n.right) {
+      const child = n.left || n.right;
+      cp.hl(n.left ? ln("def _delete", "if node.right is None") : ln("def _delete", "if node.left is None"),
+            n.left ? ln("def _delete", "return node.left") : ln("def _delete", "return node.right"));
+      mark(n.id, "removed"); tag(n.id, "1 child");
+      mark(child.id, "found"); edge(child.id, "found"); tag(child.id, "moves up");
+      status(`<b>Case 2: one child.</b> Replace ${key} with its only child ${child.key}; the parent now points straight at it, and its whole subtree moves up one level.`);
+      await DS.wait(1.5);
+      setChild(child);
+      await relayout();
+      mark(child.id, "found");
+      DS.log(logEl, `delete(${key}) → case 2 (one child): replaced by ${child.key}`, "ok");
+    } else {
+      mark(n.id, "active"); tag(n.id, "2 children");
+      cp.hl(ln("def _delete", "successor = _min(node.right)"));
+      status(`<b>Case 3: two children.</b> We can't just unlink it. Find the <b>in-order successor</b>: the smallest key in the right subtree (go right once, then left as far as possible).`);
+      await DS.wait(1.5);
+      let s = n.right, sp = n;
+      edge(s.id, "active"); mark(s.id, "active");
+      cp.hl(ln("def _min", "while node.left"));
+      await DS.wait();
+      while (s.left) {
+        cp.hl(ln("def _min", "while node.left"), ln("def _min", "node = node.left"));
+        mark(s.id, "visited");
+        sp = s; s = s.left;
+        edge(s.id, "active"); mark(s.id, "active");
+        status(`${sp.key} has a left child → keep going left to ${s.key}`);
+        await DS.wait();
+      }
+      cp.hl(ln("def _min", "return node"));
+      mark(s.id, "found"); tag(s.id, "successor");
+      status(`No left child → the successor is <b>${s.key}</b>, the next key after ${key} in sorted order. Putting it here keeps left &lt; node &lt; right.`);
+      await DS.wait(1.4);
+      cp.hl(ln("def _delete", "node.key = successor.key"));
+      n.key = s.key; els.get(n.id).t.textContent = s.key;
+      mark(n.id, "found"); tag(n.id, `was ${key}`);
+      status(`Copy ${s.key} into the node that held ${key}. Now ${s.key} appears twice…`);
+      await DS.wait(1.4);
+      cp.hl(ln("def _delete", "node.right = _delete(node.right, successor.key)"));
+      mark(s.id, "removed"); tag(s.id, "old copy");
+      status(`…so delete the old ${s.key} from the right subtree. A successor never has a left child, so this is case ${s.right ? "2 (one child: " + s.right.key + " moves up)" : "1 (leaf)"}.`);
+      await DS.wait(1.5);
+      if (sp === n) sp.right = s.right; else sp.left = s.right;
+      await relayout();
+      mark(n.id, "found"); tag(n.id, "");
+      DS.log(logEl, `delete(${key}) → case 3 (two children): replaced by successor ${s.key}`, "ok");
+    }
+    cp.hl(lnX("def _delete", "return node"));
+  }
+
+  function emit(n, k) {
+    if (outEl.querySelector(".empty")) outEl.innerHTML = "";
+    outEl.append(DS.el("div", { class: "node found new" }, String(n.key)));
+    mark(n.id, "found"); tag(n.id, "#" + k);
+  }
+  async function aTraverse(kind) {
+    clearMarks();
+    clearOutput(kind === "level");
+    const result = [];
+    const name = { inorder: "inorder", preorder: "preorder", level: "level_order" }[kind];
+    if (!tree) {
+      outEl.append(DS.el("span", { class: "empty" }, "[] (empty tree)"));
+      status(`${name}() on an empty tree → []`);
+      DS.log(logEl, `${name}() → []`, "info");
+      return;
+    }
+    const A = kind === "inorder" ? "def inorder" : "def preorder";
+    async function walk(n) {
+      if (!n) return;
+      mark(n.id, "active");
+      if (kind === "inorder") {
+        cp.hl(ln(A, "yield from _walk(node.left)"));
+        status(`At ${n.key}: walk the <b>left</b> subtree first${n.left ? "" : " (it's empty)"}`);
+        await DS.wait(0.6);
+        if (n.left) { edge(n.left.id, "active"); mark(n.id, "visited"); }
+        await walk(n.left);
+        mark(n.id, "active");
+        cp.hl(ln(A, "yield node.key"));
+        status(`Left side of ${n.key} done → output <b>${n.key}</b>`);
+        result.push(n.key); emit(n, result.length);
+        await DS.wait(0.7);
+        cp.hl(ln(A, "yield from _walk(node.right)"));
+        if (n.right) edge(n.right.id, "active");
+        await walk(n.right);
+      } else {
+        cp.hl(ln(A, "yield node.key"));
+        status(`Visit ${n.key} first → output <b>${n.key}</b>, then left, then right`);
+        result.push(n.key); emit(n, result.length);
+        await DS.wait(0.7);
+        cp.hl(ln(A, "yield from _walk(node.left)"));
+        if (n.left) edge(n.left.id, "active");
+        await walk(n.left);
+        cp.hl(ln(A, "yield from _walk(node.right)"));
+        if (n.right) edge(n.right.id, "active");
+        await walk(n.right);
+      }
+    }
+    if (kind !== "level") {
+      await walk(tree);
+      cp.hl(ln(A, "return list(_walk(self.root))"));
+    } else {
+      const q = [];
+      const drawQ = () => {
+        qEl.innerHTML = "";
+        if (!q.length) qEl.append(DS.el("span", { class: "empty" }, "(empty)"));
+        q.forEach((n, i) => qEl.append(DS.el("div", { class: "node" + (i === 0 ? " visited" : "") }, String(n.key), i === 0 ? DS.el("span", { class: "tag" }, "front") : null)));
+      };
+      q.push(tree); drawQ(); mark(tree.id, "visited");
+      cp.hl(ln("def level_order", "q.enqueue(self.root)"));
+      status(`Level-order uses a <b>Queue</b>: enqueue the root`);
+      await DS.wait();
+      while (q.length) {
+        const n = q.shift(); drawQ();
+        cp.hl(ln("def level_order", "node = q.dequeue()"), ln("def level_order", "result.append(node.key)"));
+        mark(n.id, "active");
+        status(`Dequeue ${n.key} from the front → output it`);
+        await DS.wait(0.6);
+        result.push(n.key); emit(n, result.length);
+        const kids = [n.left, n.right].filter(Boolean);
+        if (kids.length) {
+          cp.hl(n.left ? ln("def level_order", "q.enqueue(node.left)") : null, n.right ? ln("def level_order", "q.enqueue(node.right)") : null);
+          kids.forEach(c => { q.push(c); mark(c.id, "visited"); edge(c.id, "active"); });
+          drawQ();
+          status(`Enqueue the children of ${n.key}: ${kids.map(c => c.key).join(", ")} (they wait behind the rest of this level)`);
+        } else status(`${n.key} has no children → nothing to enqueue`);
+        await DS.wait(0.8);
+      }
+      cp.hl(ln("def level_order", "return result"));
+    }
+    const note = kind === "inorder" ? " (sorted!)" : "";
+    status(`${name}() → [${result.join(", ")}]${note}`);
+    DS.log(logEl, `${name}() → [${result.join(", ")}]${note}`, "ok");
+  }
+
+  async function aHeight() {
+    clearMarks();
+    cp.hl(ln("def height", "return 0 if node is None"));
+    if (!tree) { status("height() of an empty tree = 0"); DS.log(logEl, "height() → 0", "info"); return; }
+    const deep = n => { if (!n) return []; const a = deep(n.left), b = deep(n.right); return [n, ...(a.length >= b.length ? a : b)]; };
+    const path = deep(tree);
+    status(`height = 1 + max(height(left), height(right)): the number of nodes on the <b>longest</b> root-to-leaf path`);
+    for (let k = 0; k < path.length; k++) {
+      if (k) edge(path[k].id, "active");
+      mark(path[k].id, "active"); tag(path[k].id, "level " + (k + 1));
+      await DS.wait(0.5);
+      mark(path[k].id, "visited");
+    }
+    path.forEach(n => mark(n.id, "found"));
+    cp.hl(ln("def height", "return _h(self.root)"));
+    status(`height = <b>${path.length}</b>. Every insert / contains / delete walks at most ${path.length} nodes.`);
+    DS.log(logEl, `height() → ${path.length} (n = ${count(tree)})`, "ok");
+  }
+
+  async function demoBuild(keys, label) {
+    clearMarks(); clearOutput(false);
+    outEl.append(DS.el("span", { class: "empty" }, "run a traversal to fill this list"));
+    tree = null; await relayout(false);
+    DS.log(logEl, `${label}: inserting ${keys.join(", ")}`, "info");
+    for (const k of keys) await aInsert(k, 0.3);
+    clearMarks();
+    const h = height(tree), n = count(tree);
+    const deepest = Math.max(...keys);
+    if (h === n) {
+      let e = tree; while (e) { mark(e.id, "visited"); if (e !== tree) edge(e.id, "active"); e = e.right; }
+      status(`Sorted inserts: every new key is larger, so it always goes right. Height <b>${h}</b> = n. contains(${deepest}) now takes ${h} comparisons instead of ${Math.ceil(Math.log2(n + 1))}. This is a linked list in disguise: O(n).`);
+      DS.log(logEl, `sorted inserts → height ${h} (degenerate)`, "err");
+    } else {
+      status(`Same keys, smarter order: each middle key is inserted before its halves, giving height <b>${h}</b> = ⌈log₂(${n}+1)⌉. Every operation is O(log n).`);
+      DS.log(logEl, `balanced order → height ${h}`, "ok");
+    }
+  }
+
+  function loadKeys(keys) { tree = null; keys.forEach(insertRaw); clearMarks(); }
+
+  /* ---------------- wiring ---------------- */
+  function readKeys() {
+    const vals = DS.parseVals(inp.value);
+    if (!vals.length || vals.some(v => typeof v !== "number" || !Number.isInteger(v) || Math.abs(v) > 9999)) {
+      fail("Enter an integer key (e.g. 45), or several for Insert (e.g. 45, 12 90).");
+      return null;
+    }
+    return vals;
+  }
+  const ops = {
+    async insert() { const v = readKeys(); if (v) for (const k of v) if (!(await aInsert(k))) break; },
+    async contains() { const v = readKeys(); if (v) await aContains(v[0]); },
+    async delete() { const v = readKeys(); if (v) await aDelete(v[0]); },
+    height: aHeight,
+    inorder: () => aTraverse("inorder"),
+    preorder: () => aTraverse("preorder"),
+    level: () => aTraverse("level"),
+    sorted: () => demoBuild([1, 2, 3, 4, 5, 6, 7], "Insert sorted 1..7"),
+    balanced: () => demoBuild([4, 2, 6, 1, 3, 5, 7], "Balanced example"),
+    async random() {
+      const keys = new Set();
+      while (keys.size < 10) keys.add(DS.randInt(1, 99));
+      loadKeys([...keys]); clearOutput(false);
+      await relayout();
+      status(`Random tree from inserting ${[...keys].join(", ")} in that order.`);
+      DS.log(logEl, `random: ${[...keys].join(", ")}`, "info");
+    },
+    async reset() {
+      loadKeys([50, 30, 70, 20, 40, 60, 80]); clearOutput(false);
+      outEl.append(DS.el("span", { class: "empty" }, "run a traversal to fill this list"));
+      await relayout();
+      status("Reset to the README example: 50, 30, 70, 20, 40, 60, 80. Try delete(30) to see case 3.");
+      DS.log(logEl, "reset", "info");
+    },
+  };
+  root.querySelectorAll("button[data-op]").forEach(b =>
+    b.addEventListener("click", () => DS.run(root, ops[b.dataset.op])));
+  inp.addEventListener("keydown", e => { if (e.key === "Enter") DS.run(root, ops.insert); });
+
+  loadKeys([50, 30, 70, 20, 40, 60, 80]);
+  relayout(false);
+  status("Pre-loaded with 50, 30, 70, 20, 40, 60, 80. Insert 45, search for 65, or delete 30 (two children).");
+
+  DS.quiz($(".quizbox"), [
+    { q: "What does an <b>in-order</b> traversal of a BST produce?",
+      options: ["Keys level by level", "Keys in sorted order", "The root first, then the leaves", "Keys in insertion order"],
+      answer: 1,
+      why: "In-order visits left subtree, node, right subtree. Because everything on the left is smaller and everything on the right is larger, the keys come out sorted." },
+    { q: "You delete a node with <b>two children</b>. Which key takes its place?",
+      options: ["Its left child", "The root", "The smallest key in its right subtree (in-order successor)", "The largest key in the whole tree"],
+      answer: 2,
+      why: "The in-order successor is the next larger key, so it's bigger than everything on the left and smaller than everything else on the right. Copying it in keeps the BST property; then the successor (which has no left child) is deleted from the right subtree." },
+    { q: "You insert 1, 2, 3, …, 1000 in that order, then call <code>contains(1000)</code>. About how many comparisons?",
+      options: ["About 10 (log₂ 1000)", "About 500", "About 1000", "Exactly 1"],
+      answer: 2,
+      why: "Sorted inserts always go right, so the tree degenerates into a 1000-node chain of height 1000. This BST doesn't rebalance; AVL or red-black trees would keep it near 10." },
+  ]);
+})();</script>
+
+
+<section class="section" id="hash" data-title="5. Hash Table">
+  <style>
+    #hash .hcomp { margin-top: 20px; font: 600 14px var(--mono); min-height: 1.7em; color: var(--text); }
+    #hash .hcomp .hbi { color: var(--hot); }
+    #hash .hcomp .hmut { color: var(--muted); font-weight: 500; }
+    #hash .hmeter { margin: 4px 0 12px; font-size: .82rem; color: var(--text-2); }
+    #hash .hbar { position: relative; height: 12px; max-width: 420px; margin: 20px 0 6px; border-radius: 6px; background: var(--surface); border: 1px solid var(--border); }
+    #hash .hfill { height: 100%; width: 0; border-radius: 6px; background: var(--accent); transition: width .4s ease, background .3s; }
+    #hash .hbar.over .hfill { background: var(--bad); }
+    #hash .hthr { position: absolute; left: 75%; top: -6px; bottom: -6px; border-left: 2px dashed var(--text-2); }
+    #hash .hthr span { position: absolute; top: -17px; left: -15px; font: 600 10.5px var(--mono); color: var(--text-2); white-space: nowrap; }
+    #hash .hmtext { font-family: var(--mono); }
+    #hash .hmtext b.over { color: var(--bad); }
+    #hash .hpending { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-bottom: 8px; font-size: .8rem; color: var(--text-2); }
+    #hash .hpending:empty { display: none; }
+    #hash .pchip { font: 12px var(--mono); padding: 2px 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--surface); color: var(--text); transition: all .25s; }
+    #hash .pchip.active { border-color: var(--hot); background: color-mix(in srgb, var(--hot) 18%, var(--surface)); }
+    #hash .pchip.done { opacity: .35; text-decoration: line-through; }
+    #hash .hbuckets { min-width: max-content; }
+    #hash .hrow { display: flex; align-items: center; gap: 10px; padding: 4px 8px 4px 4px; min-height: 44px; border-radius: 8px; border-left: 3px solid transparent; transition: background .3s; }
+    #hash .hrow.cur { background: color-mix(in srgb, var(--accent) 14%, transparent); }
+    #hash .hrow.coll { border-left-color: var(--hot); }
+    #hash .hidx { flex: none; width: 40px; text-align: right; font: 600 12px var(--mono); color: var(--muted); }
+    #hash .hrow.cur .hidx { color: var(--text); }
+    #hash .hchain { display: flex; align-items: center; gap: 6px; }
+    #hash .hchain .node { height: 34px; font-size: 13px; white-space: nowrap; }
+    #hash .hempty { color: var(--muted); font: 12px var(--mono); }
+    #hash .harrow { color: var(--muted); }
+    #hash .hcoll { flex: none; font: 600 11px var(--sans); color: var(--hot); border: 1px solid var(--hot); border-radius: 999px; padding: 1px 8px; white-space: nowrap; }
+    #hash .shake { animation: hash-shake .4s; }
+    @keyframes hash-shake { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-6px); } 75% { transform: translateX(6px); } }
+  </style>
+
+  <h2>5. Hash Table <small style="color:var(--muted);font-weight:500">(key → value, separate chaining)</small></h2>
+  <p class="lead">A hash table maps <b>keys to values</b> with O(1) average lookups by turning each key into a bucket number. Python's <code>dict</code> and <code>set</code> are hash tables.</p>
+
+  <h3>The idea</h3>
+  <ol>
+    <li>A <b>hash function</b> turns the key into a number: <code>hash("apple")</code>.</li>
+    <li>That number, taken modulo the number of buckets, picks a <b>bucket</b>: <code>hash(key) % len(buckets)</code>.</li>
+    <li>The <code>(key, value)</code> pair is stored in that bucket. To find it again, recompute the same bucket and look only there.</li>
+  </ol>
+  <p>Think of a coat check with numbered hooks: the attendant computes the hook number from your ticket, so they go straight to it instead of searching every coat.</p>
+
+  <div class="callout warn"><b>About the hash numbers in this demo:</b> Python randomizes <code>hash()</code> for strings between runs (for security), so there's no single "real" value to show. This visualizer uses a simple, deterministic string hash called <b>djb2</b> instead: start with <code>h = 5381</code>, then for each character do <code>h = h * 33 + ord(ch)</code>, keeping 32 bits. Integers hash to themselves, as they do in Python (one quirk: CPython reserves -1 as an error code, so <code>hash(-1) == -2</code>; the demo copies that). Your buckets in Python will differ, but the mechanics are the same.</div>
+
+  <div class="grid2">
+    <div class="card">
+      <div class="controls">
+        <label style="font-size:.85rem;color:var(--text-2)">key <input type="text" id="hash-key" value="mango" style="width:96px"></label>
+        <label style="font-size:.85rem;color:var(--text-2)">value <input type="text" id="hash-val" value="12" style="width:64px"></label>
+        <button data-op="put">put</button>
+        <button data-op="get">get</button>
+        <button data-op="delete">delete</button>
+        <button data-op="contains">in</button>
+        <span class="sep"></span>
+        <button class="secondary" data-op="rand">Random put</button>
+        <button class="secondary" data-op="reset">Reset</button>
+      </div>
+      <div class="viz">
+        <span class="caption">buckets: each one is a list of (key, value) pairs</span>
+        <div class="hcomp"></div>
+        <div class="hmeter">
+          <div class="hbar"><div class="hfill"></div><div class="hthr"><span>0.75</span></div></div>
+          <div class="hmtext"></div>
+        </div>
+        <div class="hpending"></div>
+        <div class="hbuckets"></div>
+      </div>
+      <div class="status"></div>
+      <div class="log"></div>
+    </div>
+    <div class="code"></div>
+  </div>
+
+  <h3>Collisions and separate chaining</h3>
+  <p>Two different keys can land in the same bucket. This is called a <b>collision</b>. In the demo above, <code>'date'</code> and <code>'fig'</code> both land in bucket 3, and the default key <code>'mango'</code> lands in bucket 7 next to <code>'apple'</code>. This implementation uses <b>separate chaining</b>: each bucket is a small Python list of pairs, and <code>get</code> / <code>put</code> / <code>delete</code> scan that list comparing <code>k == key</code>. Rows with a collision get an orange left border and a "collision ×N" badge.</p>
+
+  <h3>Load factor and resizing</h3>
+  <p>The <b>load factor</b> is <code>items / buckets</code>. As it grows, chains get longer and lookups slow down. When it goes above <b>0.75</b>, <code>_resize()</code> doubles the number of buckets and <b>re-inserts every pair</b>, because each key's bucket index (<code>hash % capacity</code>) changes when the capacity changes. Try it: starting from 5 items in 8 buckets, the 7th item pushes the load to 7/8 = 0.875 and triggers a resize to 16.</p>
+  <div class="callout tip"><b>Why resizing is still O(1) on average:</b> a resize costs O(n), but it only happens after the table has doubled in size. Spread over all the puts that led up to it, each put pays a constant amount (amortized O(1)), just like appending to a Python <code>list</code>.</div>
+
+  <h3>Rules for keys</h3>
+  <p>Keys must be <b>hashable</b>, and equal keys must have equal hashes. That's why you can't use a <code>list</code> as a <code>dict</code> key: it can change after insertion, which would change its hash and strand it in the wrong bucket. Note that <code>1</code> and <code>'1'</code> are different keys here (an int and a string).</p>
+
+  <h3>Complexity</h3>
+  <table class="cx">
+    <thead><tr><th>Operation</th><th>Average</th><th>Worst case (all keys collide)</th></tr></thead>
+    <tbody>
+      <tr><td><code>put</code></td><td><span class="big o1">O(1)</span> amortized</td><td><span class="big on">O(n)</span></td></tr>
+      <tr><td><code>get</code></td><td><span class="big o1">O(1)</span></td><td><span class="big on">O(n)</span></td></tr>
+      <tr><td><code>delete</code></td><td><span class="big o1">O(1)</span></td><td><span class="big on">O(n)</span></td></tr>
+      <tr><td><code>key in table</code></td><td><span class="big o1">O(1)</span></td><td><span class="big on">O(n)</span></td></tr>
+      <tr><td><code>_resize</code> (one call)</td><td><span class="big on">O(n)</span></td><td><span class="big on">O(n)</span></td></tr>
+    </tbody>
+  </table>
+
+  <h3>Where it shows up</h3>
+  <ul>
+    <li>Python's <code>dict</code> and <code>set</code>, and object attribute lookup</li>
+    <li>Caches and memoization (an LRU cache is a hash table plus a doubly linked list)</li>
+    <li>Counting and de-duplicating things (word frequencies, "have I seen this before?")</li>
+    <li>Database hash indexes, compiler symbol tables, routing tables</li>
+  </ul>
+
+  <div class="quizbox"></div>
+</section>
+<script>(() => {
+  const root = document.getElementById("hash");
+  const $ = s => root.querySelector(s);
+  const esc = DS.esc;
+
+  const PY = String.raw`
+class HashTable:
+    def __init__(self, capacity=8):
+        self._buckets = [[] for _ in range(capacity)]
+        self._size = 0
+
+    def _bucket(self, key):
+        return self._buckets[hash(key) % len(self._buckets)]
+
+    def _resize(self):
+        old = [pair for bucket in self._buckets for pair in bucket]
+        self._buckets = [[] for _ in range(len(self._buckets) * 2)]
+        self._size = 0
+        for k, v in old:
+            self.put(k, v)
+
+    def put(self, key, value):
+        bucket = self._bucket(key)
+        for i, (k, _) in enumerate(bucket):
+            if k == key:
+                bucket[i] = (key, value)
+                return
+        bucket.append((key, value))
+        self._size += 1
+        if self._size / len(self._buckets) > 0.75:
+            self._resize()
+
+    def get(self, key, default=None):
+        for k, v in self._bucket(key):
+            if k == key:
+                return v
+        return default
+
+    def delete(self, key):
+        bucket = self._bucket(key)
+        for i, (k, _) in enumerate(bucket):
+            if k == key:
+                del bucket[i]
+                self._size -= 1
+                return True
+        return False
+
+    def __contains__(self, key):
+        return any(k == key for k, _ in self._bucket(key))
+`;
+  const cp = DS.code($(".code"), PY, "class HashTable — data_structures.py");
+  // Line number of the first line containing `sub` at/after "def fn(".
+  const L = (fn, sub) => {
+    const s = cp.lines.findIndex(l => l.includes("def " + fn + "("));
+    const i = cp.lines.findIndex((l, j) => j >= s && l.includes(sub));
+    return i + 1;
+  };
+
+  const statusEl = $(".status"), logEl = $(".log");
+  const compEl = $(".hcomp"), bucketsEl = $(".hbuckets"), pendingEl = $(".hpending");
+  const barEl = $(".hbar"), fillEl = $(".hfill"), mtextEl = $(".hmtext");
+  const keyIn = $("#hash-key"), valIn = $("#hash-val");
+
+  // ---- deterministic demo hash (djb2); ints hash to themselves (except -1 -> -2, as in CPython) ----
+  function strHash(s) {
+    let h = 5381;
+    for (const ch of s) h = (Math.imul(h, 33) + ch.codePointAt(0)) >>> 0;
+    return h;
+  }
+  const hashOf = k => (typeof k === "number" ? (k === -1 ? -2 : k) : strHash(k));
+  const idxOf = (k, n) => ((hashOf(k) % n) + n) % n;
+  const parse = s => (/^-?\d{1,15}$/.test(s) ? parseInt(s, 10) : s);
+  const repr = x => (typeof x === "number" ? String(x) : `'${x}'`);
+  const pairText = (k, v) => `(${repr(k)}, ${repr(v)})`;
+
+  const INITIAL = [["apple", 3], ["banana", 5], ["cherry", 7], ["date", 9], ["fig", 4]];
+  const WORDS = ["mango", "grape", "kiwi", "lemon", "pear", "plum", "lime", "melon", "peach", "berry",
+    "olive", "guava", "papaya", "quince", "apricot", "durian", "lychee", "nectarine", "orange", "cocoa"];
+  let buckets = [], size = 0;
+
+  const status = (html, kind) => {
+    statusEl.innerHTML = kind === "err" ? `<span style="color:var(--bad);font-weight:600">Error:</span> ${html}` : html;
+  };
+
+  function reset() {
+    buckets = Array.from({ length: 8 }, () => []);
+    size = 0;
+    for (const [k, v] of INITIAL) { buckets[idxOf(k, 8)].push([k, v]); size++; }
+    pendingEl.innerHTML = "";
+    compEl.innerHTML = `<span class="hmut">hash(key) % capacity picks the bucket</span>`;
+    render();
+    cp.clear();
+  }
+
+  function render() {
+    bucketsEl.innerHTML = "";
+    buckets.forEach((b, i) => {
+      const chain = DS.el("div", { class: "hchain" });
+      if (!b.length) chain.append(DS.el("span", { class: "hempty" }, "[ ]"));
+      b.forEach(([k, v], j) => {
+        if (j) chain.append(DS.el("span", { class: "harrow" }, "→"));
+        chain.append(DS.el("div", { class: "node" }, pairText(k, v)));
+      });
+      bucketsEl.append(DS.el("div", { class: "hrow" + (b.length > 1 ? " coll" : "") },
+        DS.el("div", { class: "hidx" }, `[${i}]`), chain,
+        b.length > 1 ? DS.el("span", { class: "hcoll" }, `collision ×${b.length}`) : null));
+    });
+    updateMeter();
+  }
+
+  function updateMeter() {
+    const n = buckets.length, load = size / n, over = load > 0.75;
+    fillEl.style.width = Math.min(load, 1) * 100 + "%";
+    barEl.classList.toggle("over", over);
+    mtextEl.innerHTML = `size = ${size} · capacity = ${n} · load factor = ${size}/${n} = ` +
+      `<b class="${over ? "over" : ""}">${load.toFixed(3).replace(/0+$/, "").replace(/\.$/, "")}</b>` +
+      (over ? " &gt; 0.75 (over threshold!)" : " ≤ 0.75");
+  }
+
+  const rowEl = i => bucketsEl.children[i];
+  const pairEl = (i, j) => rowEl(i).querySelectorAll(".node")[j];
+  // Scroll only the .viz box (never the page) so row i is visible.
+  const vizEl = bucketsEl.closest(".viz");
+  function scrollRow(i) {
+    const r = rowEl(i);
+    if (!r || !vizEl) return;
+    const vb = vizEl.getBoundingClientRect(), rb = r.getBoundingClientRect();
+    const top = rb.top - vb.top + vizEl.scrollTop, bottom = top + rb.height;
+    let y = null;
+    if (top < vizEl.scrollTop) y = top - 8;
+    else if (bottom > vizEl.scrollTop + vizEl.clientHeight) y = bottom - vizEl.clientHeight + 8;
+    if (y === null) return;
+    const reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    vizEl.scrollTo({ top: Math.max(0, y), behavior: reduce ? "auto" : "smooth" });
+  }
+  const setCur = i => [...bucketsEl.children].forEach((r, j) => r.classList.toggle("cur", j === i));
+  function showComp(k) {
+    const n = buckets.length, i = idxOf(k, n);
+    compEl.innerHTML = `hash(${esc(repr(k))}) = ${hashOf(k)} % ${n} = <span class="hbi">${i}</span> <span class="hmut">→ bucket ${i}</span>`;
+    return i;
+  }
+  function shake(e) { e.classList.remove("shake"); void e.offsetWidth; e.classList.add("shake"); }
+
+  async function findBucket(k, line) {
+    render();
+    cp.hl(line);
+    await DS.wait(0.5);
+    cp.hl(L("_bucket", "return self._buckets"));
+    const i = showComp(k);
+    setCur(i);
+    scrollRow(i);
+    const n = buckets[i].length;
+    status(`${esc(repr(k))} hashes to bucket <b>${i}</b>` + (n ? `, which already holds ${n} pair${n > 1 ? "s" : ""}: scan the chain.` : ", which is empty."));
+    await DS.wait();
+    return i;
+  }
+
+  async function scan(i, k, line) {
+    const b = buckets[i];
+    for (let j = 0; j < b.length; j++) {
+      cp.hl(line);
+      const e = pairEl(i, j);
+      e.classList.add("active");
+      const eq = b[j][0] === k;
+      status(`compare <code>${esc(repr(b[j][0]))} == ${esc(repr(k))}</code> → <b>${eq ? "True" : "False"}</b>`);
+      await DS.wait();
+      e.classList.remove("active");
+      if (eq) { e.classList.add("found"); return j; }
+      e.classList.add("dim");
+    }
+    return -1;
+  }
+
+  async function resize() {
+    const n = buckets.length;
+    cp.hl(L("_resize", "old = ["));
+    const old = buckets.flat();
+    bucketsEl.querySelectorAll(".node").forEach(e => e.classList.add("dim"));
+    pendingEl.innerHTML = "";
+    pendingEl.append(DS.el("span", {}, "old ="));
+    const chips = old.map(([k, v]) => DS.el("span", { class: "pchip" }, pairText(k, v)));
+    pendingEl.append(...chips);
+    status(`Load factor ${size}/${n} &gt; 0.75 → <b>_resize()</b>: collect all ${old.length} pairs into <code>old</code>.`);
+    DS.log(logEl, `load ${size}/${n} = ${(size / n).toFixed(3)} &gt; 0.75 → resize`, "info");
+    await DS.wait(1.3);
+
+    cp.hl(L("_resize", "self._buckets = [[]"));
+    buckets = Array.from({ length: n * 2 }, () => []);
+    render();
+    compEl.innerHTML = `<span class="hmut">capacity ${n} → ${n * 2}: every key's bucket index must be recomputed</span>`;
+    status(`New, empty bucket array with <b>${n * 2}</b> buckets (double).`);
+    await DS.wait(1.1);
+
+    cp.hl(L("_resize", "self._size = 0"));
+    size = 0;
+    updateMeter();
+    await DS.wait(0.6);
+
+    for (let t = 0; t < old.length; t++) {
+      const [k, v] = old[t];
+      cp.hl(L("_resize", "for k, v in old"), L("_resize", "self.put(k, v)"));
+      chips[t].classList.add("active");
+      const before = idxOf(k, n);
+      const i = showComp(k);
+      buckets[i].push([k, v]);
+      size++;
+      render();
+      setCur(i);
+      const e = pairEl(i, buckets[i].length - 1);
+      e.classList.add("new", "found");
+      scrollRow(i);
+      status(`rehash ${esc(repr(k))}: bucket ${before} (of ${n}) → bucket <b>${i}</b> (of ${n * 2})` + (buckets[i].length > 1 ? " (collision)" : ""));
+      await DS.wait(0.8);
+      chips[t].classList.remove("active");
+      chips[t].classList.add("done");
+    }
+    pendingEl.innerHTML = "";
+    setCur(-1);
+    DS.log(logEl, `resized ${n} → ${n * 2} buckets, rehashed ${old.length} pairs; load now ${size}/${n * 2} = ${(size / (n * 2)).toFixed(3)}`, "ok");
+    status(`Resize done: ${old.length} pairs rehashed into ${n * 2} buckets. Load factor is now ${(size / (n * 2)).toFixed(3)}.`);
+  }
+
+  async function put(k, v) {
+    const i = await findBucket(k, L("put", "bucket = self._bucket(key)"));
+    if (buckets[i].length) DS.log(logEl, `collision: ${esc(repr(k))} → bucket ${i} (already ${buckets[i].length} pair${buckets[i].length > 1 ? "s" : ""})`, "info");
+    const j = await scan(i, k, L("put", "if k == key"));
+    if (j >= 0) {
+      cp.hl(L("put", "bucket[i] = (key, value)"), L("put", "                return"));
+      const old = buckets[i][j][1];
+      buckets[i][j] = [k, v];
+      render(); setCur(i);
+      pairEl(i, j).classList.add("found", "new");
+      status(`Key exists → value updated ${esc(repr(old))} → ${esc(repr(v))}. Size unchanged.`);
+      DS.log(logEl, `put(${esc(repr(k))}, ${esc(repr(v))}) updated existing key (was ${esc(repr(old))})`, "ok");
+      await DS.wait();
+      return;
+    }
+    cp.hl(L("put", "bucket.append((key, value))"));
+    buckets[i].push([k, v]);
+    render(); setCur(i);
+    pairEl(i, buckets[i].length - 1).classList.add("new", "found");
+    status(`Not found → append ${esc(pairText(k, v))} to bucket ${i}.`);
+    await DS.wait();
+    cp.hl(L("put", "self._size += 1"));
+    size++;
+    updateMeter();
+    await DS.wait(0.6);
+    cp.hl(L("put", "if self._size / len"));
+    const n = buckets.length, load = size / n;
+    status(`load factor = ${size} / ${n} = ${load.toFixed(3)} ${load > 0.75 ? "&gt; 0.75 → resize!" : "≤ 0.75 → no resize"}`);
+    DS.log(logEl, `put(${esc(repr(k))}, ${esc(repr(v))}) → bucket ${i}; size ${size}`, "ok");
+    await DS.wait();
+    if (load > 0.75) { cp.hl(L("put", "self._resize()")); await DS.wait(0.6); await resize(); }
+    setCur(-1);
+  }
+
+  async function get(k) {
+    const i = await findBucket(k, L("get", "for k, v in self._bucket(key)"));
+    const j = await scan(i, k, L("get", "if k == key"));
+    if (j >= 0) {
+      cp.hl(L("get", "return v"));
+      const v = buckets[i][j][1];
+      status(`Found → returns <b>${esc(repr(v))}</b> after looking in just one bucket.`);
+      DS.log(logEl, `get(${esc(repr(k))}) → ${esc(repr(v))}`, "ok");
+    } else {
+      cp.hl(L("get", "return default"));
+      shake(rowEl(i));
+      status(`${esc(repr(k))} is not in bucket ${i}, so it isn't anywhere → returns <b>None</b> (the default).`);
+      DS.log(logEl, `get(${esc(repr(k))}) → None (missing)`, "err");
+    }
+  }
+
+  async function contains(k) {
+    const line = L("__contains__", "return any");
+    const i = await findBucket(k, line);
+    const j = await scan(i, k, line);
+    status(`${esc(repr(k))} in table → <b>${j >= 0 ? "True" : "False"}</b>`);
+    if (j < 0) shake(rowEl(i));
+    DS.log(logEl, `${esc(repr(k))} in ht → ${j >= 0 ? "True" : "False"}`, j >= 0 ? "ok" : "err");
+  }
+
+  async function del(k) {
+    const i = await findBucket(k, L("delete", "bucket = self._bucket(key)"));
+    const j = await scan(i, k, L("delete", "if k == key"));
+    if (j < 0) {
+      cp.hl(L("delete", "return False"));
+      shake(rowEl(i));
+      status(`${esc(repr(k))} not found → returns <b>False</b>, nothing removed.`, "err");
+      DS.log(logEl, `delete(${esc(repr(k))}) → False (not found)`, "err");
+      return;
+    }
+    cp.hl(L("delete", "del bucket[i]"));
+    pairEl(i, j).classList.add("removed");
+    status(`Remove ${esc(pairText(...buckets[i][j]))} from bucket ${i}.`);
+    await DS.wait();
+    buckets[i].splice(j, 1);
+    render(); setCur(i);
+    cp.hl(L("delete", "self._size -= 1"));
+    size--;
+    updateMeter();
+    await DS.wait(0.6);
+    cp.hl(L("delete", "return True"));
+    status(`Deleted ${esc(repr(k))} → returns <b>True</b>. (This table grows but never shrinks.)`);
+    DS.log(logEl, `delete(${esc(repr(k))}) → True; size ${size}`, "ok");
+    await DS.wait(0.5);
+    setCur(-1);
+  }
+
+  function readKey() {
+    const raw = keyIn.value.trim();
+    if (!raw) {
+      status("enter a key first.", "err");
+      DS.log(logEl, "no key given", "err");
+      shake(keyIn);
+      return null;
+    }
+    return parse(raw);
+  }
+  function readVal() {
+    const raw = valIn.value.trim();
+    return raw === "" ? null : parse(raw);
+  }
+
+  const ops = {
+    put: () => {
+      const k = readKey(); if (k === null) return;
+      const v = readVal();
+      if (v === null) { status("enter a value for put.", "err"); DS.log(logEl, "put needs a value", "err"); shake(valIn); return; }
+      return DS.run(root, () => put(k, v));
+    },
+    get: () => { const k = readKey(); if (k !== null) return DS.run(root, () => get(k)); },
+    delete: () => { const k = readKey(); if (k !== null) return DS.run(root, () => del(k)); },
+    contains: () => { const k = readKey(); if (k !== null) return DS.run(root, () => contains(k)); },
+    rand: () => {
+      const present = new Set(buckets.flat().map(p => p[0]));
+      const free = WORDS.filter(w => !present.has(w));
+      const k = free.length ? free[DS.randInt(0, free.length - 1)] : DS.randInt(100, 999);
+      const v = DS.randInt(1, 99);
+      keyIn.value = k; valIn.value = v;
+      return DS.run(root, () => put(k, v));
+    },
+    reset: () => DS.run(root, async () => {
+      reset();
+      status("Reset to 5 pairs in 8 buckets.");
+      DS.log(logEl, "reset", "info");
+    }),
+  };
+  root.querySelectorAll("button[data-op]").forEach(b => b.addEventListener("click", () => ops[b.dataset.op]()));
+  [keyIn, valIn].forEach(inp => inp.addEventListener("keydown", e => { if (e.key === "Enter") ops.put(); }));
+
+  reset();
+  status(`5 pairs preloaded. Note the collision in bucket 3. Try <b>put</b> twice to trigger a resize, or <b>get</b> 'fig'.`);
+
+  DS.quiz($(".quizbox"), [
+    {
+      q: "Why does <code>_resize()</code> re-insert every pair instead of just copying the old bucket lists over?",
+      options: ["To sort the keys", "Because each key's bucket is hash % capacity, and the capacity changed", "To remove duplicate keys", "Python requires it"],
+      answer: 1,
+      why: "The bucket index depends on <code>len(self._buckets)</code>. Doubling the capacity changes <code>hash(key) % capacity</code> for many keys, so every pair must be rehashed into its new bucket.",
+    },
+    {
+      q: "The table has 8 buckets and 6 items. You put a <i>new</i> key. What happens?",
+      options: ["Nothing special", "Resize to 16 buckets (7/8 = 0.875 > 0.75)", "Resize to 9 buckets", "An error: table full"],
+      answer: 1,
+      why: "After the append, size = 7 and 7/8 = 0.875 &gt; 0.75, so <code>_resize()</code> doubles the capacity to 16. With chaining the table is never \"full\"; it just gets slower.",
+    },
+    {
+      q: "When is a hash table lookup O(n)?",
+      options: ["Never", "When the key is a string", "When many keys collide into the same bucket", "Right after a resize"],
+      answer: 2,
+      why: "If all keys land in one bucket, that bucket's chain has n pairs and <code>get</code> must scan them all. A good hash function and resizing keep chains short, giving O(1) on average.",
+    },
+  ]);
+})();</script>
+
+
+<section class="section" id="choose" data-title="Choosing a structure">
+  <h2>Choosing the right structure</h2>
+  <p class="lead">The real skill is matching a problem to a structure. For each scenario, pick the structure you'd reach for, then reveal the answer.</p>
+  <div class="scenario" id="scenarios"></div>
+  <h3>Quick reference</h3>
+  <table class="cx">
+    <thead><tr><th>You need to…</th><th>Use</th></tr></thead>
+    <tbody>
+      <tr><td>Undo the most recent action, or match nested pairs</td><td><a href="#stack"><b>Stack</b></a></td></tr>
+      <tr><td>Process items in arrival order</td><td><a href="#queue"><b>Queue</b></a></td></tr>
+      <tr><td>Insert or remove often in the middle, given a reference to a node</td><td><a href="#sll"><b>Linked list</b></a></td></tr>
+      <tr><td>Keep data sorted while inserting and deleting</td><td><a href="#bst"><b>Balanced BST</b></a></td></tr>
+      <tr><td>Look up values by key as fast as possible</td><td><a href="#hash"><b>Hash table</b></a></td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section class="section" id="cheatsheet" data-title="Complexity cheat sheet">
+  <h2>Complexity cheat sheet</h2>
+  <p class="lead">Click a column header to sort, or filter to one operation to compare structures side by side.</p>
+  <style>
+    #cheatsheet [data-col][aria-pressed="true"] { background: var(--surface-2); color: var(--text); border-color: var(--accent); box-shadow: inset 0 -2px 0 var(--accent); }
+    #cheatsheet th[tabindex]:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+  </style>
+  <div class="controls" role="group" aria-label="Filter by operation">
+    <button class="secondary always" data-col="all" aria-pressed="true">All operations</button>
+    <button class="secondary always" data-col="1" aria-pressed="false">Access</button>
+    <button class="secondary always" data-col="2" aria-pressed="false">Search</button>
+    <button class="secondary always" data-col="3" aria-pressed="false">Insert</button>
+    <button class="secondary always" data-col="4" aria-pressed="false">Delete</button>
+  </div>
+  <div style="overflow-x:auto"><table class="cx" id="cxTable"></table></div>
+  <p style="font-size:.85rem;color:var(--muted)">* amortized &nbsp; † average case &nbsp;·&nbsp; dot color = growth class (same colors as the Big-O chart)</p>
+</section>
+
+<section class="section" id="finalquiz" data-title="Final quiz & certificate">
+  <h2>Final quiz &amp; certificate</h2>
+  <p class="lead">This is the last step of the course: one list of 10 questions covering every lesson. After each answer you'll see the correct option and why it's right. Score 80% or more (8 of 10) to earn a certificate with your name.</p>
+  <style>
+    #finalquiz .fq-progress { font-weight: 600; margin: 4px 0 12px; }
+    #finalquiz .fq-result { margin: 8px 0 0; }
+    #finalquiz .fq-result .controls { margin-top: 10px; }
+    #finalquiz .cert { margin: 18px auto 0; max-width: 760px; text-align: center; background: var(--surface);
+      border: 3px double var(--accent); outline: 1px solid var(--border); outline-offset: 6px;
+      border-radius: 6px; padding: 36px 28px; }
+    #finalquiz .cert .c-kicker { font-size: .8rem; letter-spacing: .2em; text-transform: uppercase; color: var(--text-2); }
+    #finalquiz .cert .c-title { font-size: 1.9rem; font-weight: 700; margin: 6px 0 18px; }
+    #finalquiz .cert .c-name { font-size: 2.1rem; font-weight: 700; color: var(--accent); margin: 10px auto 6px;
+      padding: 0 24px 6px; border-bottom: 1px solid var(--border); display: inline-block; max-width: 100%; overflow-wrap: anywhere; }
+    #finalquiz .cert .c-body { color: var(--text-2); margin: 10px 0; }
+    #finalquiz .cert .c-score { font-size: 1.15rem; font-weight: 600; margin: 14px 0 4px; }
+    #finalquiz .cert .c-levels { font-size: .9rem; color: var(--text-2); }
+    #finalquiz .cert .c-sign, #certPrint .c-sign { display: inline-flex; flex-direction: column; align-items: center; min-width: 200px; }
+    #finalquiz .cert .c-sig, #certPrint .c-sig { font: italic 400 1.9rem/1.1 "Segoe Script", "Brush Script MT", "Lucida Handwriting", "Apple Chancery", cursive;
+      padding: 0 10px 4px; border-bottom: 1px solid var(--border); align-self: stretch; text-align: center; }
+    #finalquiz .cert .c-sig { color: var(--accent); }
+    #finalquiz .cert .c-sigrole, #certPrint .c-sigrole { font-size: .85rem; margin-top: 6px; }
+    #finalquiz .cert .c-foot { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; flex-wrap: wrap; text-align: left;
+      margin-top: 28px; font-size: .85rem; color: var(--text-2); }
+    #finalquiz .cert, #certPrint .cert { box-sizing: border-box; }
+    #certPrint { display: none; }
+    @media print {
+      html, body { background: white !important; color: black !important; }
+      body > *:not(#certPrint) { display: none !important; }
+      /* Same blue as the on-screen certificate (light-theme --accent); fixed so dark mode prints the same. */
+      #certPrint { display: block; padding: 24px; --cert-blue: #2a78d6; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      #certPrint .cert { text-align: center; max-width: 760px; margin: 0 auto; padding: 48px 32px; background: white; color: black;
+        border: 3px double var(--cert-blue); outline: 1px solid #c9d8ec; outline-offset: 6px; border-radius: 6px; font-family: var(--sans); }
+      #certPrint .c-kicker { font-size: .8rem; letter-spacing: .2em; text-transform: uppercase; color: #333; }
+      #certPrint .c-title { font-size: 1.9rem; font-weight: 700; margin: 6px 0 18px; }
+      #certPrint .c-name { font-size: 2.1rem; font-weight: 700; color: var(--cert-blue); margin: 10px auto 6px; padding: 0 24px 6px; border-bottom: 1px solid #c9d8ec; display: inline-block; }
+      #certPrint .c-body, #certPrint .c-levels, #certPrint .c-foot { color: #333; margin: 10px 0; }
+      #certPrint .c-score { font-size: 1.15rem; font-weight: 600; margin: 14px 0 4px; }
+      #certPrint .c-foot { display: flex; justify-content: space-between; align-items: baseline; margin-top: 28px; font-size: .85rem; text-align: left; }
+      #certPrint .c-sig { color: var(--cert-blue); border-bottom-color: #c9d8ec; }
+    }
+  </style>
+  <div id="finalQuizBox"></div>
+  <div class="card" id="certBox" aria-live="polite"></div>
+</section>
+
+<script>
+(() => {
+  /* ---------- scenarios ---------- */
+  const options = ["Stack", "Queue", "Linked list", "BST", "Hash table"];
+  const scenarios = [
+    ["A text editor's Undo button.", "Stack", "Undo always reverses the <i>most recent</i> action: last in, first out."],
+    ["A printer receiving jobs from many users.", "Queue", "Jobs should print in the order they arrived: first in, first out."],
+    ["Counting how many times each word appears in a book.", "Hash table", "Word → count lookups and updates in O(1) on average."],
+    ["A web server handling incoming requests fairly, oldest first.", "Queue", "Requests are served in the order they arrived: FIFO, O(1) to enqueue and dequeue."],
+    ["Checking that every ( [ { in a code file has a matching closer.", "Stack", "Push each opener; on a closer, pop and check it matches. The most recent unmatched opener must close first."],
+    ["A leaderboard that must list players in score order while scores change constantly.", "BST", "A balanced BST keeps keys sorted with O(log n) insert and delete, and an in-order walk lists them in order."],
+    ["A music playlist where you often remove the current song or insert one right after it.", "Linked list", "With a reference to the node, inserting or removing next to it is O(1), with no shifting."],
+  ];
+  const box = document.getElementById("scenarios");
+  scenarios.forEach(([text, ans, why]) => {
+    const sel = DS.el("select", {}, DS.el("option", { value: "" }, "Choose…"), ...options.map(o => DS.el("option", {}, o)));
+    const out = DS.el("div", { class: "answer" });
+    sel.addEventListener("change", () => {
+      if (!sel.value) return;
+      const ok = sel.value === ans;
+      out.innerHTML = (ok ? "✓ <b>Correct!</b> " : `✗ <b>Not quite.</b> Best answer: <b>${ans}</b>. `) + why;
+      out.style.color = "var(--text)";
+      out.classList.add("show");
+      sel.style.borderColor = ok ? "var(--ok)" : "var(--bad)";
+    });
+    box.append(DS.el("div", { class: "card" }, DS.el("p", {}, text), sel, DS.el("div", { style: { height: "8px" } }), out));
+  });
+
+  /* ---------- sortable / filterable cheat sheet ---------- */
+  const cls = s => s.startsWith("O(log") ? "olog" : s.startsWith("O(1)") ? "o1" : s.startsWith("O(n log") ? "onlog"
+    : s.startsWith("O(n²") ? "on2" : s.startsWith("O(n)") ? "on" : "";
+  const rank = s => { const c = cls(s); return { o1: 0, olog: 1, on: 2, onlog: 3, on2: 4 }[c] ?? 9; };
+  const rows = [
+    ["Stack", "#stack", "O(1) top only", "O(n)", "O(1)*", "O(1)"],
+    ["Queue", "#queue", "O(1) front only", "O(n)", "O(1)*", "O(1)*"],
+    ["Singly linked list", "#sll", "O(n)", "O(n)", "O(1) at head", "O(n)"],
+    ["BST (balanced)", "#bst", "O(log n)", "O(log n)", "O(log n)", "O(log n)"],
+    ["BST (degenerate)", "#bst", "O(n)", "O(n)", "O(n)", "O(n)"],
+    ["Hash table", "#hash", "—", "O(1)†", "O(1)†", "O(1)†"],
+  ];
+  const heads = ["Structure", "Access", "Search", "Insert", "Delete"];
+  const table = document.getElementById("cxTable");
+  let sortCol = -1, asc = true, onlyCol = "all";
+  function renderTable() {
+    let data = rows.slice();
+    if (sortCol >= 0) data.sort((a, b) => {
+      const d = sortCol === 0 ? a[0].localeCompare(b[0]) : rank(a[sortCol + 1]) - rank(b[sortCol + 1]);
+      return asc ? d : -d;
+    });
+    const cols = onlyCol === "all" ? [1, 2, 3, 4] : [+onlyCol];
+    table.innerHTML = "";
+    const sortBy = c => {
+      asc = sortCol === c ? !asc : true; sortCol = c; renderTable();
+      const th = table.querySelector(`th[data-c="${c}"]`);
+      if (th) th.focus();
+    };
+    table.append(DS.el("thead", {}, DS.el("tr", {}, ...[0, ...cols].map(c => DS.el("th", {
+      style: { cursor: "pointer", userSelect: "none" }, title: "Sort by " + heads[c],
+      tabindex: "0", scope: "col", "data-c": String(c),
+      "aria-sort": sortCol === c ? (asc ? "ascending" : "descending") : "none",
+      onclick: () => sortBy(c),
+      onkeydown: e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); sortBy(c); } }
+    }, heads[c] + (sortCol === c ? (asc ? " ▲" : " ▼") : ""))))));
+    table.append(DS.el("tbody", {}, ...data.map(r => DS.el("tr", {},
+      DS.el("td", {}, DS.el("a", { href: r[1] }, r[0])),
+      ...cols.map(c => DS.el("td", {}, DS.el("span", { class: "big " + cls(r[c + 1]) }, r[c + 1])))))));
+  }
+  const filterBtns = [...document.querySelectorAll("#cheatsheet [data-col]")];
+  filterBtns.forEach(b => b.addEventListener("click", () => {
+    onlyCol = b.dataset.col;
+    filterBtns.forEach(x => x.setAttribute("aria-pressed", String(x === b)));
+    renderTable();
+  }));
+  renderTable();
+
+  /* ---------- final quiz: one list ---------- */
+  const finalQs = [
+    { q: "Big-O: an algorithm does 5n + 20 steps. What is its time complexity?", options: ["O(1)", "O(log n)", "O(n)", "O(n²)"], answer: 2,
+      why: "Big-O keeps only the fastest-growing term and drops constants, so 5n + 20 becomes <b>O(n)</b>: double the input, roughly double the work." },
+    { q: "A stack is <b>LIFO</b>. If you push 1, then 2, then 3, what does <code>pop()</code> return?", options: ["1", "2", "3"], answer: 2,
+      why: "LIFO means <i>Last In, First Out</i>. 3 was pushed last, so it sits on top and comes off first." },
+    { q: "A queue is <b>FIFO</b>. You enqueue A, then B, then C. What does <code>dequeue()</code> return?", options: ["A", "B", "C"], answer: 0,
+      why: "FIFO means <i>First In, First Out</i>, like a line at a shop. A arrived first, so A leaves first." },
+    { q: "Why is <code>Queue.dequeue()</code> <b>amortized</b> O(1) and not always O(1)?", options: ["It sometimes resizes an array", "When _out is empty, it moves every item from _in to _out", "Python lists are slow", "It hashes each item"], answer: 1,
+      why: "That one transfer costs O(n). But each item is moved from <code>_in</code> to <code>_out</code> at most once in its life, so over many operations the cost averages out to O(1) per dequeue." },
+    { q: "In the Python code, what is the time complexity of <code>SinglyLinkedList.append()</code>?", options: ["O(1)", "O(log n)", "O(n)", "O(n²)"], answer: 2,
+      why: "The class keeps only a <code>head</code> pointer, so <code>append</code> walks every node to find the end: O(n). <code>prepend</code> is O(1). Adding a <code>tail</code> pointer would make append O(1) too." },
+    { q: "Which traversal of a binary search tree visits the keys in sorted order?", options: ["Preorder", "Inorder", "Postorder", "Level order"], answer: 1,
+      why: "Inorder visits <i>left subtree → node → right subtree</i>. In a BST everything on the left is smaller and everything on the right is larger, so the keys come out in ascending order." },
+    { q: "You insert 1, 2, 3, 4, 5 into an empty BST (no balancing). How many levels tall is the tree?", options: ["2", "3", "log₂ 5", "5"], answer: 3,
+      why: "Each key is larger than the one before, so it always goes to the right child. The tree becomes a single chain 1 → 2 → 3 → 4 → 5, five levels tall: a linked list in disguise, so search is O(n)." },
+    { q: "Which structure looks up a value by its key in O(1) on average, like a dictionary?", options: ["Stack", "Hash table", "Singly linked list", "BST"], answer: 1,
+      why: "A hash table turns the key into a bucket number with <code>hash(key) % buckets</code>, so it jumps straight to the right place instead of searching." },
+    { q: "A <code>HashTable</code> starts with 8 buckets and resizes when <code>size / buckets &gt; 0.75</code>. Which <code>put</code> of a new key triggers the first resize?", options: ["The 6th", "The 7th", "The 8th", "The 9th"], answer: 1,
+      why: "After 6 puts the load is 6 / 8 = 0.75, which is <i>not</i> greater than 0.75. The 7th put makes it 7 / 8 = 0.875 > 0.75, so the table doubles to 16 buckets and re-inserts every pair." },
+    { q: "You need to keep usernames <b>sorted</b> while adding and removing them often, and list them in order. Which structure fits best?", options: ["Hash table", "Queue", "Balanced BST", "Stack"], answer: 2,
+      why: "A balanced BST keeps keys ordered with O(log n) insert and delete, and an inorder walk lists them sorted. A hash table is faster for lookups but keeps no order." },
+  ];
+  const fq = document.getElementById("finalQuizBox");
+  const certBox = document.getElementById("certBox");
+  const PASS = 0.8;
+  let result = { correct: 0, answered: 0, total: finalQs.length };
+  const totalQs = finalQs.length;
+  const needed = Math.ceil(PASS * totalQs);
+  let certName = "", showScore = true;
+  // The provider who signs every certificate: fixed, never taken from the learner's input.
+  const PROVIDER = "Ibrahim Sobh";
+
+  // Re-render the certificate panel from the current answers.
+  function renderCert() {
+    const { correct, answered } = result;
+    const pct = Math.round(100 * correct / totalQs);
+    certBox.innerHTML = "";
+    certBox.append(DS.el("h3", { style: { margin: "0 0 4px" } }, "🎓 Certificate"));
+    if (answered < totalQs) {
+      certBox.append(
+        DS.el("p", { class: "fq-progress" }, `${answered} of ${totalQs} questions answered · ${correct} correct so far`),
+        DS.el("p", { style: { margin: "0", color: "var(--text-2)" } },
+          `Answer all ${totalQs} questions. You need at least ${needed} correct (80%) to earn your certificate.`));
+      return;
+    }
+    if (correct < needed) {
+      certBox.append(DS.el("div", { class: "callout warn fq-result" },
+        DS.el("b", {}, `Not yet: you scored ${correct} / ${totalQs} (${pct}%).`),
+        ` You need ${needed} / ${totalQs} (80%) for the certificate, so ${needed - correct} more correct answer${needed - correct > 1 ? "s" : ""}. `,
+        "Read the explanations above, then press ", DS.el("b", {}, "Try again"), " to retake the quiz."));
+      return;
+    }
+    const nameIn = DS.el("input", { type: "text", maxlength: "60", placeholder: "Your full name", "aria-label": "Your name for the certificate", style: { minWidth: "220px" } });
+    nameIn.value = certName;
+    const err = DS.el("span", { style: { color: "var(--bad)", fontWeight: "600" } });
+    const scoreCb = DS.el("input", { type: "checkbox", style: { accentColor: "var(--accent)", margin: "0 6px 0 0" } });
+    scoreCb.checked = showScore;
+    // Toggling updates a certificate that is already on screen.
+    scoreCb.addEventListener("change", () => { showScore = scoreCb.checked; if (certName) showCert(certName, correct, pct); });
+    const make = () => {
+      const name = nameIn.value.trim().replace(/\s+/g, " ");
+      if (!name) { err.textContent = "Please enter your name first."; nameIn.focus(); return; }
+      certName = name; err.textContent = "";
+      showCert(name, correct, pct);
+    };
+    nameIn.addEventListener("keydown", e => { if (e.key === "Enter") make(); });
+    certBox.append(DS.el("div", { class: "callout tip fq-result" },
+      DS.el("b", {}, `✓ Passed! You scored ${correct} / ${totalQs} (${pct}%).`),
+      " Enter your name to get your certificate.",
+      DS.el("div", { class: "controls" }, nameIn, DS.el("button", { class: "always", onclick: make }, "Get my certificate"), err),
+      DS.el("label", { style: { display: "inline-flex", alignItems: "center", marginTop: "8px", cursor: "pointer" } },
+        scoreCb, "Show my score on the certificate")));
+    if (certName) showCert(certName, correct, pct);
+  }
+
+  function showCert(name, correct, pct) {
+    const old = certBox.querySelector(".cert-wrap");
+    if (old) old.remove();
+    const date = new Date().toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" });
+    const cert = DS.el("div", { class: "cert", role: "img", "aria-label": `Certificate of completion for ${name}` },
+      DS.el("div", { class: "c-kicker" }, "Certificate of completion"),
+      DS.el("div", { class: "c-title" }, "Introduction to Data Structures"),
+      DS.el("div", { class: "c-body" }, "This certifies that"),
+      DS.el("div", { class: "c-name" }, name),
+      DS.el("div", { class: "c-body" }, "has completed the self-paced course and passed its final quiz, covering Big-O analysis and the theory and practice of stacks, queues, singly linked lists, binary search trees and hash tables."),
+      showScore && DS.el("div", { class: "c-score" }, `Score: ${correct} / ${totalQs} (${pct}%)`),
+      DS.el("div", { class: "c-foot" },
+        DS.el("div", { class: "c-date" }, `Date: ${date}`),
+        DS.el("div", { class: "c-sign" },
+          DS.el("div", { class: "c-sig" }, PROVIDER),
+          DS.el("div", { class: "c-sigrole" }, "Course Provider"))));
+    const wrap = DS.el("div", { class: "cert-wrap" }, cert,
+      DS.el("div", { class: "controls", style: { justifyContent: "center", marginTop: "14px" } },
+        DS.el("button", { class: "always", onclick: () => printCert(cert) }, "Print / Save as PDF"),
+        DS.el("button", { class: "always", onclick: () => downloadCert(name, correct, pct, date) }, "Download as image")));
+    certBox.append(wrap);
+  }
+
+  // Print only the certificate: copy it into a top-level element that the print CSS keeps visible.
+  function printCert(cert) {
+    let host = document.getElementById("certPrint");
+    if (!host) { host = DS.el("div", { id: "certPrint" }); document.body.append(host); }
+    host.innerHTML = "";
+    host.append(cert.cloneNode(true));
+    window.print();
+  }
+
+  // Draw the certificate onto a canvas (same look as the printed one) and save it as a PNG.
+  async function downloadCert(name, correct, pct, date) {
+    if (document.fonts && document.fonts.ready) await document.fonts.ready;
+    const W = 800, S = 2, BLUE = "#2a78d6", LINE = "#c9d8ec", GREY = "#333";
+    const SANS = 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif';
+    const SCRIPT = '"Segoe Script", "Brush Script MT", "Lucida Handwriting", "Apple Chancery", cursive';
+    const body = "has completed the self-paced course and passed its final quiz, covering Big-O analysis and the theory and practice of stacks, queues, singly linked lists, binary search trees and hash tables.";
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
+
+    // Lay out (and, when draw is true, paint) the certificate; returns its height.
+    function layout(draw) {
+      const text = (s, x, y, font, color, align = "center") => {
+        ctx.font = font; ctx.fillStyle = color; ctx.textAlign = align;
+        if (draw) ctx.fillText(s, x, y);
+        return ctx.measureText(s).width;
+      };
+      const line = (x1, y1, x2, y2, color) => {
+        if (!draw) return;
+        ctx.strokeStyle = color; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+      };
+      let y = 100;
+      // Spaced capitals, drawn letter by letter so every browser spaces them the same.
+      ctx.font = `13px ${SANS}`;
+      const kicker = "CERTIFICATE OF COMPLETION", gap = 2.6;
+      const kw = [...kicker].reduce((w, c) => w + ctx.measureText(c).width + gap, -gap);
+      let kx = (W - kw) / 2;
+      for (const c of kicker) { text(c, kx, y, `13px ${SANS}`, GREY, "left"); kx += ctx.measureText(c).width + gap; }
+      y += 50; text("Introduction to Data Structures", W / 2, y, `700 30px ${SANS}`, "#000");
+      y += 52; text("This certifies that", W / 2, y, `16px ${SANS}`, GREY);
+      y += 52;
+      ctx.font = `700 34px ${SANS}`;
+      let shown = name;
+      while (ctx.measureText(shown).width > W - 140 && shown.length > 1) shown = shown.slice(0, -1);
+      if (shown !== name) shown = shown.trimEnd() + "…";
+      const nw = text(shown, W / 2, y, `700 34px ${SANS}`, BLUE);
+      y += 16; line(W / 2 - nw / 2 - 24, y, W / 2 + nw / 2 + 24, y, LINE);
+      ctx.font = `16px ${SANS}`;
+      const lines = [];
+      let cur = "";
+      for (const word of body.split(" ")) {
+        const next = cur ? cur + " " + word : word;
+        if (ctx.measureText(next).width > W - 100 && cur) { lines.push(cur); cur = word; } else cur = next;
+      }
+      lines.push(cur);
+      y += 18;
+      for (const l of lines) { y += 26; text(l, W / 2, y, `16px ${SANS}`, GREY); }
+      if (showScore) { y += 38; text(`Score: ${correct} / ${totalQs} (${pct}%)`, W / 2, y, `600 18px ${SANS}`, "#000"); }
+      y += 64;
+      text(`Date: ${date}`, 60, y + 4, `13.5px ${SANS}`, GREY, "left");
+      const sx = W - 170;
+      const sw = Math.max(200, text(PROVIDER, sx, y, `italic 30px ${SCRIPT}`, BLUE) + 20);
+      line(sx - sw / 2, y + 12, sx + sw / 2, y + 12, LINE);
+      text("Course Provider", sx, y + 34, `13.5px ${SANS}`, GREY);
+      const H = y + 80;
+      if (draw) {
+        // Thin outer frame, then the double blue border, as on the printed certificate.
+        ctx.strokeStyle = LINE; ctx.lineWidth = 1; ctx.beginPath(); ctx.roundRect(14.5, 14.5, W - 29, H - 29, 10); ctx.stroke();
+        ctx.strokeStyle = BLUE;
+        for (const i of [21.5, 24.5]) { ctx.beginPath(); ctx.roundRect(i, i, W - 2 * i, H - 2 * i, 6); ctx.stroke(); }
+      }
+      return H;
+    }
+
+    const H = layout(false);
+    canvas.width = W * S; canvas.height = H * S;
+    ctx.scale(S, S);
+    ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, W, H);
+    ctx.textBaseline = "alphabetic";
+    layout(true);
+
+    const slug = name.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, "-").replace(/^-+|-+$/g, "") || "certificate";
+    canvas.toBlob(blob => {
+      const a = DS.el("a", { href: URL.createObjectURL(blob), download: `certificate-${slug}.png` });
+      document.body.append(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+    }, "image/png");
+  }
+
+  const qBox = DS.el("div");
+  const reset = () => {
+    qBox.innerHTML = "";
+    result = { correct: 0, answered: 0, total: totalQs };
+    DS.quiz(qBox, finalQs, r => { result = r; renderCert(); });
+  };
+  fq.append(DS.el("div", { class: "card", style: { marginBottom: "16px" } },
+    DS.el("div", { style: { display: "flex", alignItems: "baseline", gap: "12px", flexWrap: "wrap" } },
+      DS.el("h3", { style: { margin: "0" } }, "Final quiz"),
+      DS.el("span", { style: { color: "var(--text-2)", flex: "1" } }, `${totalQs} questions covering every lesson.`),
+      DS.el("button", { class: "secondary always", onclick: reset }, "Try again")),
+    qBox));
+  reset();
+})();
+</script>
+
+
+<footer>Introduction to Data Structures — a self-paced course built around <code>data_structures.py</code>. Every code panel shows the real method from that file. Single self-contained file; works offline.</footer>
+</main>
+</div>
+
+<script>
+/* Build the sidebar from every section that has a data-title, and track the current one. */
+(() => {
+  const nav = document.getElementById("nav");
+  const sections = [...document.querySelectorAll("section[data-title]")];
+  const links = sections.map(s => {
+    const a = DS.el("a", { href: "#" + s.id }, s.dataset.title);
+    nav.append(a);
+    return a;
+  });
+  const io = new IntersectionObserver(entries => {
+    entries.forEach(en => {
+      if (en.isIntersecting) {
+        links.forEach(l => {
+          const on = l.getAttribute("href") === "#" + en.target.id;
+          l.classList.toggle("current", on);
+          // In the narrow-screen chip bar, keep the current chip visible (horizontal scroll only).
+          if (on && nav.scrollWidth > nav.clientWidth) {
+            const left = l.offsetLeft - (nav.clientWidth - l.offsetWidth) / 2;
+            nav.scrollTo({ left: Math.max(0, left), behavior: DS.reducedMotion() ? "auto" : "smooth" });
+          }
+        });
+      }
+    });
+  }, { rootMargin: "-40% 0px -55% 0px" });
+  sections.forEach(s => io.observe(s));
+})();
+</script>
+</body>
+</html>
