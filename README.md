@@ -18,4 +18,8 @@ A free, self-paced course on the five foundational data structures: stacks, queu
 
 Finish with the final quiz. Score 8 of 10 or more to get a certificate with your name, which you can download as an image or save as a PDF and share.
 
+**Here's what your certificate looks like:**
+
+![Sample certificate of completion for Introduction to Data Structures, with the learner's name, the date and the course provider's signature](images/certificate-sample.png)
+
 Everything runs in your browser. Nothing you enter, including your name, is sent anywhere.
