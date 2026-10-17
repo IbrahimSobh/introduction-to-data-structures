@@ -725,7 +725,7 @@ document.getElementById("themeBtn").addEventListener("click", () => {
   <p>The stack is a Python list where the <b>end of the list is the top</b>. <code>append()</code> and <code>pop()</code> at the end of a list are both O(1): nothing else has to move. Using the <i>front</i> of the list as the top would be a mistake, because <code>pop(0)</code> shifts every other element, which costs O(n).</p>
   <div class="callout tip"><b>Bracket check:</b> push every opening bracket. For each closing bracket, pop and check that the two match. If a pop finds the wrong bracket (or nothing), or the stack is not empty at the end, the brackets are unbalanced. Try <code>([)]</code> and <code>((()</code>.</div>
 
-  <table class="cx">
+  <div style="overflow-x:auto"><table class="cx">
     <thead><tr><th>Operation</th><th>Cost</th><th>Why</th></tr></thead>
     <tbody>
       <tr><td><code>push</code></td><td><span class="big o1">O(1)</span></td><td>amortized; <code>list.append</code> at the end</td></tr>
@@ -733,7 +733,7 @@ document.getElementById("themeBtn").addEventListener("click", () => {
       <tr><td><code>peek</code></td><td><span class="big o1">O(1)</span></td><td>read <code>_items[-1]</code></td></tr>
       <tr><td>search for a value</td><td><span class="big on">O(n)</span></td><td>a stack isn't built for this</td></tr>
     </tbody>
-  </table>
+  </table></div>
 
   <h3>Where it shows up</h3>
   <ul>
@@ -1093,14 +1093,14 @@ def balanced(expr):
   <div class="callout tip"><b>Amortized O(1):</b> each item is moved from <code>_in</code> to <code>_out</code> <b>at most once</b>. One <code>dequeue</code> can cost O(n), but averaged over many operations each one is O(1). Watch the “moves per op” counter in the demo stay at or below 1.</div>
   <div class="callout warn">In real code, use <code>collections.deque</code>. The two-stack queue is shown here because it teaches amortized analysis well.</div>
 
-  <table class="cx">
+  <div style="overflow-x:auto"><table class="cx">
     <thead><tr><th>Operation</th><th>Cost</th><th>Why</th></tr></thead>
     <tbody>
       <tr><td><code>enqueue</code></td><td><span class="big o1">O(1)</span></td><td>append to <code>_in</code></td></tr>
       <tr><td><code>dequeue</code></td><td><span class="big o1">O(1)</span> amortized, <span class="big on">O(n)</span> worst case</td><td>the occasional transfer moves everything, but each item only once</td></tr>
       <tr><td><code>peek</code></td><td><span class="big o1">O(1)</span></td><td><code>_out[-1]</code> or <code>_in[0]</code></td></tr>
     </tbody>
-  </table>
+  </table></div>
 
   <h3>Where it shows up</h3>
   <ul>
@@ -1368,7 +1368,7 @@ def balanced(expr):
   <p style="font-size:.88rem;color:var(--text-2)">Reading the boxes: <b>●</b> means <code>next</code> points at the neighbouring box (follow the arrow), <b>∅</b> means <code>next</code> is <code>None</code>, and <b>→20</b> (orange) means it points at the node holding 20, which is not drawn next to it. Pointer variables like <code>cur</code> and <code>prev</code> are shown as labels above the nodes.</p>
 
   <h3>Arrays vs linked lists</h3>
-  <table class="cx">
+  <div style="overflow-x:auto"><table class="cx">
     <thead><tr><th></th><th>Array (Python list)</th><th>Linked list</th></tr></thead>
     <tbody>
       <tr><td>Access by index</td><td><span class="big o1">O(1)</span></td><td><span class="big on">O(n)</span>, you have to walk the chain</td></tr>
@@ -1376,7 +1376,7 @@ def balanced(expr):
       <tr><td>Insert after a node you already have</td><td><span class="big on">O(n)</span></td><td><span class="big o1">O(1)</span>, just change pointers</td></tr>
       <tr><td>Memory</td><td>Compact</td><td>Extra pointer per node</td></tr>
     </tbody>
-  </table>
+  </table></div>
 
   <h3>How it works: key techniques</h3>
   <ul>
@@ -1387,7 +1387,7 @@ def balanced(expr):
   <div class="callout tip"><b>Why the one-line swap works:</b> Python evaluates the whole right side <code>(prev, cur, cur.next)</code> <i>before</i> assigning anything. So the old <code>cur.next</code> is saved even though <code>cur.next</code> is overwritten in the same line. Press <b>reverse</b> and watch the three labels move.</div>
   <div class="callout warn"><b>No tail pointer:</b> this class only stores <code>head</code>, so <code>append</code> must walk the whole chain to find the last node. Keeping a <code>tail</code> reference would make it O(1).</div>
 
-  <table class="cx">
+  <div style="overflow-x:auto"><table class="cx">
     <thead><tr><th>Operation</th><th>Cost</th><th>Why</th></tr></thead>
     <tbody>
       <tr><td><code>prepend</code></td><td><span class="big o1">O(1)</span></td><td>new node points at the old head; head moves</td></tr>
@@ -1395,7 +1395,7 @@ def balanced(expr):
       <tr><td><code>insert</code>, <code>remove</code>, <code>find</code></td><td><span class="big on">O(n)</span></td><td>walking to the position or value; the relink itself is O(1)</td></tr>
       <tr><td><code>reverse</code></td><td><span class="big on">O(n)</span> time, <span class="big o1">O(1)</span> extra space</td><td>one pass, three pointer variables</td></tr>
     </tbody>
-  </table>
+  </table></div>
 
   <h3>Where it shows up</h3>
   <ul>
@@ -2038,28 +2038,28 @@ class SinglyLinkedList:
   </ul>
 
   <h3>Traversals</h3>
-  <table class="cx">
+  <div style="overflow-x:auto"><table class="cx">
     <thead><tr><th>Traversal</th><th>Order</th><th>For 50,30,70,20,40,60,80</th><th>Use</th></tr></thead>
     <tbody>
       <tr><td><b>In-order</b></td><td>left, node, right</td><td><code>20 30 40 50 60 70 80</code></td><td>Visits keys <b>in sorted order</b></td></tr>
       <tr><td><b>Pre-order</b></td><td>node, left, right</td><td><code>50 30 20 40 70 60 80</code></td><td>Copying or serializing a tree</td></tr>
       <tr><td><b>Level-order</b></td><td>level by level</td><td><code>50 30 70 20 40 60 80</code></td><td>Uses a <b>Queue</b> (BFS on a tree)</td></tr>
     </tbody>
-  </table>
+  </table></div>
 
   <div class="callout warn"><b>Balance matters.</b> The cost of every operation depends on the tree's <b>height</b>, not on the number of nodes.
     Inserting <code>4,2,6,1,3,5,7</code> gives height 3; inserting the same keys sorted (<code>1..7</code>) gives height 7, which is just a linked list.
     Try both buttons above. This BST does <b>not</b> rebalance itself; self-balancing trees such as <b>AVL</b> and <b>red-black</b> trees keep the height at O(log n) no matter the insert order.</div>
 
   <h3>Complexity</h3>
-  <table class="cx">
+  <div style="overflow-x:auto"><table class="cx">
     <thead><tr><th>Operation</th><th>Balanced</th><th>Worst case (degenerate)</th></tr></thead>
     <tbody>
       <tr><td><code>insert</code>, <code>contains</code>, <code>delete</code></td><td><span class="big olog">O(log n)</span></td><td><span class="big on">O(n)</span></td></tr>
       <tr><td>Traversals (in-order, pre-order, level-order)</td><td><span class="big on">O(n)</span></td><td><span class="big on">O(n)</span></td></tr>
       <tr><td><code>height</code></td><td><span class="big on">O(n)</span></td><td><span class="big on">O(n)</span></td></tr>
     </tbody>
-  </table>
+  </table></div>
 
   <h3>Where it shows up</h3>
   <ul>
@@ -2753,7 +2753,7 @@ class BinarySearchTree:
   <p>Keys must be <b>hashable</b>, and equal keys must have equal hashes. That's why you can't use a <code>list</code> as a <code>dict</code> key: it can change after insertion, which would change its hash and strand it in the wrong bucket. Note that <code>1</code> and <code>'1'</code> are different keys here (an int and a string).</p>
 
   <h3>Complexity</h3>
-  <table class="cx">
+  <div style="overflow-x:auto"><table class="cx">
     <thead><tr><th>Operation</th><th>Average</th><th>Worst case (all keys collide)</th></tr></thead>
     <tbody>
       <tr><td><code>put</code></td><td><span class="big o1">O(1)</span> amortized</td><td><span class="big on">O(n)</span></td></tr>
@@ -2762,7 +2762,7 @@ class BinarySearchTree:
       <tr><td><code>key in table</code></td><td><span class="big o1">O(1)</span></td><td><span class="big on">O(n)</span></td></tr>
       <tr><td><code>_resize</code> (one call)</td><td><span class="big on">O(n)</span></td><td><span class="big on">O(n)</span></td></tr>
     </tbody>
-  </table>
+  </table></div>
 
   <h3>Where it shows up</h3>
   <ul>
@@ -3155,7 +3155,7 @@ class HashTable:
   <p class="lead">The real skill is matching a problem to a structure. For each scenario, pick the structure you'd reach for, then reveal the answer.</p>
   <div class="scenario" id="scenarios"></div>
   <h3>Quick reference</h3>
-  <table class="cx">
+  <div style="overflow-x:auto"><table class="cx">
     <thead><tr><th>You need to…</th><th>Use</th></tr></thead>
     <tbody>
       <tr><td>Undo the most recent action, or match nested pairs</td><td><a href="#stack"><b>Stack</b></a></td></tr>
@@ -3164,7 +3164,7 @@ class HashTable:
       <tr><td>Keep data sorted while inserting and deleting</td><td><a href="#bst"><b>Balanced BST</b></a></td></tr>
       <tr><td>Look up values by key as fast as possible</td><td><a href="#hash"><b>Hash table</b></a></td></tr>
     </tbody>
-  </table>
+  </table></div>
 </section>
 
 <section class="section" id="cheatsheet" data-title="Complexity cheat sheet">
