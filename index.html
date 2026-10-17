@@ -426,6 +426,8 @@ document.getElementById("themeBtn").addEventListener("click", () => {
   <div class="kicker">Free self-paced course · Certificate on completion</div>
   <h1>Introduction to Data Structures</h1>
   <p class="lead">Learn the five foundational data structures every programmer uses: stacks, queues, linked lists, binary search trees and hash tables. Each lesson pairs the <b>theory</b> (how it works and what it costs) with <b>practice</b>: the real Python code, an interactive visualizer you can drive yourself, and quizzes. Go at your own pace, then pass the final quiz to earn your certificate.</p>
+  <p>A <b>data structure</b> is a way of arranging data in a program so that some jobs, such as adding, finding or removing items, are fast. Each structure makes different jobs fast, and this course shows you which.</p>
+  <div class="callout"><b>Before you start:</b> this course assumes you can read basic Python: variables, lists, <code>if</code>, loops, functions and classes. If you are new to Python, take <a href="https://ibrahimsobh.github.io/introduction-to-python/" target="_blank" rel="noopener">Introduction to Python</a> first.</div>
   <style>
     #intro .kicker { font-size: .8rem; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: var(--accent); margin: 0 0 6px; }
     #intro .pillars { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin: 18px 0 0; }
@@ -457,7 +459,7 @@ document.getElementById("themeBtn").addEventListener("click", () => {
 
   <h3>How the course works</h3>
   <ol class="path">
-    <li><b>Start with the Big-O primer</b><span>a short refresher on how we measure cost.</span></li>
+    <li><b>Start with the Big-O primer</b><span>a short introduction to Big-O, a way to describe how the work grows as the data grows.</span></li>
     <li><b>Work through the 5 lessons in order</b><span>read the idea, run the visualizer, watch the code panel, then take the lesson quiz.</span></li>
     <li><b>Practise</b><span>compare structures in "Choosing a structure" and the complexity cheat sheet.</span></li>
     <li><b>Take the final quiz</b><span>One list of 10 questions covering every lesson. Score 8 of 10 or more to earn your certificate.</span></li>
@@ -480,7 +482,7 @@ document.getElementById("themeBtn").addEventListener("click", () => {
     <ul>
       <li><span class="node" aria-hidden="true">7</span><span><b>Normal</b><small>An item sitting in the structure, not involved in the current step.</small></span></li>
       <li><span class="node active" aria-hidden="true">7</span><span><b>Being examined</b><small>The item the code is looking at right now, e.g. comparing it during a search.</small></span></li>
-      <li><span class="node visited" aria-hidden="true">7</span><span><b>Visited / pointer</b><small>Already checked, or where a pointer like <code>head</code> or <code>cur</code> points.</small></span></li>
+      <li><span class="node visited" aria-hidden="true">7</span><span><b>Visited / marker</b><small>Already checked, or the item that a named marker (such as <code>head</code>, the start of a linked list) is on. Lesson 3 explains these markers, called pointers.</small></span></li>
       <li><span class="node found" aria-hidden="true">7</span><span><b>Found / done</b><small>The result: the item a search found, or a step that finished.</small></span></li>
     </ul>
   </div>
@@ -488,7 +490,8 @@ document.getElementById("themeBtn").addEventListener("click", () => {
 
 <section class="section" id="bigo" data-title="Big-O primer">
   <h2>A quick primer on Big-O</h2>
-  <p class="lead">Big-O describes how an operation's running time <b>grows</b> as the amount of data (<i>n</i>) grows. It ignores constant factors and only looks at the overall shape of the curve.</p>
+  <p class="lead">Big-O describes how an operation's running time <b>grows</b> as the amount of data (<i>n</i>) grows. It ignores fixed multipliers and smaller extra terms, and only looks at the overall shape of the curve.</p>
+  <p>An <b>operation</b> is one action on the data, such as adding an item or searching for one. Its <b>running time</b> is counted in steps. For example, an operation that takes <code>5n + 20</code> steps is still <b>O(n)</b>: when n is large, doubling n roughly doubles the work, and the 5 and the 20 don't change that shape.</p>
   <div class="card">
     <div class="controls">
       <label style="font-size:.9rem;color:var(--text-2)">n up to <input type="range" id="bigoN" min="8" max="200" value="40" style="width:160px;vertical-align:middle"></label>
@@ -508,15 +511,18 @@ document.getElementById("themeBtn").addEventListener("click", () => {
   <table class="cx">
     <thead><tr><th>Notation</th><th>Name</th><th>Intuition</th><th>Example</th><th>Steps for n = 1,000,000</th></tr></thead>
     <tbody>
-      <tr><td><span class="big o1">O(1)</span></td><td>Constant</td><td>Same speed no matter how much data</td><td>Pushing onto a stack</td><td class="big">1</td></tr>
-      <tr><td><span class="big olog">O(log n)</span></td><td>Logarithmic</td><td>Each step cuts the problem in half</td><td>Searching a balanced BST</td><td class="big">≈ 20</td></tr>
-      <tr><td><span class="big on">O(n)</span></td><td>Linear</td><td>Touches every element once</td><td>Searching a linked list</td><td class="big">1,000,000</td></tr>
-      <tr><td><span class="big onlog">O(n log n)</span></td><td>Linearithmic</td><td>Typical of efficient sorting</td><td>Heap sort</td><td class="big">≈ 20,000,000</td></tr>
-      <tr><td><span class="big on2">O(n²)</span></td><td>Quadratic</td><td>Compares every element with every other</td><td>Naive duplicate check</td><td class="big">1,000,000,000,000</td></tr>
+      <tr><td><span class="big o1">O(1)</span></td><td>Constant</td><td>Same speed no matter how much data</td><td>Taking the top plate off a pile (a stack, Lesson 1)</td><td class="big">1</td></tr>
+      <tr><td><span class="big olog">O(log n)</span></td><td>Logarithmic</td><td>Each step cuts the problem in half</td><td>Finding a word in a paper dictionary by opening it in the middle each time</td><td class="big">≈ 20</td></tr>
+      <tr><td><span class="big on">O(n)</span></td><td>Linear</td><td>Touches every element once</td><td>Reading every name on a list once</td><td class="big">1,000,000</td></tr>
+      <tr><td><span class="big onlog">O(n log n)</span></td><td>Linearithmic</td><td>n times log n: typical of fast sorting methods</td><td>Sorting a list with a fast sorting method (not covered in this course)</td><td class="big">≈ 20,000,000</td></tr>
+      <tr><td><span class="big on2">O(n²)</span></td><td>Quadratic</td><td>Compares every element with every other</td><td>Comparing every pair of people in a room to find two with the same birthday</td><td class="big">1,000,000,000,000</td></tr>
     </tbody>
   </table>
   </div>
-  <div class="callout"><b>Amortized</b> cost means "averaged over a long sequence of operations." An occasional operation may be slow, but if it's rare enough, the average stays low. You'll see this in the Queue and the Hash Table.</div>
+  <p><b>Where the numbers come from:</b> <b>log n</b> (here log base 2) is how many times you can halve n before you reach 1. 1,000,000 can be halved about 20 times (2<sup>20</sup> = 1,048,576), so O(log n) is about 20 steps, and O(n log n) is 1,000,000 × 20 = 20,000,000. O(n²) is 1,000,000 × 1,000,000.</p>
+  <p>The <b>Log scale</b> button squeezes big numbers so each grid line is 10 times the one below it, letting all five curves fit on one chart.</p>
+  <div class="callout"><b>Worst case</b> is the cost on the unluckiest possible input. <b>Average case</b> is the typical cost over many inputs. The lessons give both when they differ.</div>
+  <div class="callout"><b>Amortized</b> cost means "averaged over a long sequence of operations." An occasional operation may be slow, but if it's rare enough, the average stays low. You'll see this first in the Stack (push), then in the Queue and the Hash Table.</div>
 
   <h3>Suggested learning order</h3>
   <p style="color:var(--text-2)">Start with the linear structures, because the tree builds on the same ideas. The hash table stands alone and can be read at any time.</p>
@@ -1328,7 +1334,8 @@ def balanced(expr):
   </style>
   <h2>3. Singly Linked List <small style="color:var(--muted);font-weight:500">(chain of nodes)</small></h2>
   <p class="lead">A linked list is a chain of <b>nodes</b>: each node holds a value and a pointer to the <b>next</b> node.</p>
-  <p>Instead of one block of memory like an array, the items can live anywhere. The list only remembers where the chain starts (<code>head</code>); the last node's <code>next</code> is <code>None</code>. Think of a treasure hunt: each clue tells you where the next one is, so to reach clue 5 you must follow clues 1 to 4.</p>
+  <p>A <b>pointer</b> (also called a <b>reference</b>) tells you where another item is stored in the computer's memory, like a home address. Following a node's pointer takes you to the next node.</p>
+  <p>An <b>array</b> keeps its items side by side in one block of memory, numbered 0, 1, 2, …; a Python list works this way. A linked list is different: its items can live anywhere in memory. The list only remembers where the chain starts (<code>head</code>); the last node's <code>next</code> is <code>None</code>, Python's value for "nothing here". Think of a treasure hunt: each clue tells you where the next one is, so to reach clue 5 you must follow clues 1 to 4.</p>
 
   <div class="grid2">
     <div class="card">
@@ -1968,9 +1975,21 @@ class SinglyLinkedList:
     @keyframes bst-shake { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-6px); } 75% { transform: translateX(6px); } }
   </style>
   <h2>4. Binary Search Tree <small style="color:var(--muted);font-weight:500">(BST)</small></h2>
-  <p class="lead">A binary tree where everything in a node's left subtree is smaller and everything in its right subtree is larger, so every comparison discards half of what's left.</p>
+  <p class="lead">A binary tree where everything in a node's left subtree is smaller and everything in its right subtree is larger, so, when the tree is well balanced, each comparison discards about half of what's left.</p>
+  <div class="callout"><b>Tree words used in this lesson:</b>
+    <ul style="margin:6px 0 0">
+      <li>A <b>tree</b> is a set of nodes joined like a family tree drawn upside down. The top node is the <b>root</b>.</li>
+      <li>Each node can point to nodes below it, called its <b>children</b>. In a <b>binary</b> tree each node has at most two: a <b>left child</b> and a <b>right child</b>.</li>
+      <li>A node with no children is a <b>leaf</b>.</li>
+      <li>A node together with everything below it is a <b>subtree</b>. A node's <b>left subtree</b> is its left child and everything below that child.</li>
+      <li>A node's <b>depth</b> is how many steps it is from the root (the root has depth 0).</li>
+      <li>The tree's <b>height</b> is the number of nodes on its longest path from the root down to a leaf.</li>
+      <li>A tree is <b>balanced</b> when it is short and bushy rather than long and thin, so no path is much longer than the others.</li>
+      <li>In a BST, the items we store and compare are called <b>keys</b>.</li>
+    </ul>
+  </div>
   <p>Each node has at most two children, and the <b>BST property</b> holds at <em>every</em> node. That makes searching
-    exactly like binary search on a sorted array: at each node you compare once and continue in only one direction.
+    like looking up a word in a paper dictionary: open it in the middle, see whether the word comes before or after, and ignore the other half. At each node you compare once and continue in only one direction.
     Think of a "guess the number" game where each answer is "higher" or "lower".</p>
 
   <div class="grid2">
@@ -2681,17 +2700,18 @@ class BinarySearchTree:
   </style>
 
   <h2>5. Hash Table <small style="color:var(--muted);font-weight:500">(key → value, separate chaining)</small></h2>
-  <p class="lead">A hash table maps <b>keys to values</b> with O(1) average lookups by turning each key into a bucket number. Python's <code>dict</code> and <code>set</code> are hash tables.</p>
+  <p class="lead">A hash table stores pairs: a <b>key</b> (the name you look something up by, such as a word) and a <b>value</b> (what you want to find, such as how often the word appears). It keeps a row of numbered slots called <b>buckets</b> and turns each key into a bucket number, so a lookup takes O(1) on average.</p>
+  <p>Python's <code>dict</code> (key → value pairs, like <code>{'apple': 3}</code>) and <code>set</code> (a collection with no repeats) are both hash tables.</p>
 
   <h3>The idea</h3>
   <ol>
-    <li>A <b>hash function</b> turns the key into a number: <code>hash("apple")</code>.</li>
-    <li>That number, taken modulo the number of buckets, picks a <b>bucket</b>: <code>hash(key) % len(buckets)</code>.</li>
+    <li>A <b>hash function</b> is a fixed recipe that turns any key into a whole number: <code>hash("apple")</code>. The same key always gives the same number.</li>
+    <li>Divide that number by the number of buckets and keep the <b>remainder</b>. This is called <b>modulo</b>, written <code>%</code> in Python: for example <code>13 % 8 = 5</code>. With 8 buckets the remainder is always 0 to 7, so it always picks a valid <b>bucket</b>: <code>hash(key) % len(buckets)</code>.</li>
     <li>The <code>(key, value)</code> pair is stored in that bucket. To find it again, recompute the same bucket and look only there.</li>
   </ol>
   <p>Think of a coat check with numbered hooks: the attendant computes the hook number from your ticket, so they go straight to it instead of searching every coat.</p>
 
-  <div class="callout warn"><b>About the hash numbers in this demo:</b> Python randomizes <code>hash()</code> for strings between runs (for security), so there's no single "real" value to show. This visualizer uses a simple, deterministic string hash called <b>djb2</b> instead: start with <code>h = 5381</code>, then for each character do <code>h = h * 33 + ord(ch)</code>, keeping 32 bits. Integers hash to themselves, as they do in Python (one quirk: CPython reserves -1 as an error code, so <code>hash(-1) == -2</code>; the demo copies that). Your buckets in Python will differ, but the mechanics are the same.</div>
+  <div class="callout warn"><b>About the hash numbers in this demo:</b> Python's own <code>hash()</code> gives different numbers for words each time Python starts, so there's no single "real" value to show. This demo uses a simple fixed recipe called <b>djb2</b> instead: start with <code>h = 5381</code>, then for each letter multiply by 33 and add the letter's code number (<code>ord(ch)</code> gives it): <code>h = h * 33 + ord(ch)</code>. Whole numbers are used as their own hash, as in Python. Your bucket numbers in real Python will differ, but the steps are the same.<br><small>Two small details: the demo keeps only the last 32 binary digits of <code>h</code> so it doesn't grow forever, and, like Python, it treats <code>hash(-1)</code> as -2 because Python uses -1 internally to mean an error.</small></div>
 
   <div class="grid2">
     <div class="card">
