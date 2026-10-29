@@ -25,12 +25,13 @@
   --text: #0b0b0b;
   --text-2: #52514e;
   --muted: #6b6a65;
-  --accent: #2a78d6;   /* default node / primary */
+  --accent: #246abd;   /* default node / primary; >= 4.5:1 on --surface, --bg, --surface-2 and the lesson band */
   --accent-strong: #2b6bc9; /* primary button background (white text >= 4.5:1) */
   --hot: #eb6834;      /* currently active / being compared */
   --ok: #1baf7a;       /* found / success */
   --bad: #e34948;      /* removed / error */
   --violet: #6250d6;   /* secondary highlight (visited, pointer) */
+  --hot-text: #b5481c; /* orange words in text (>= 4.5:1) */
   --s1: #2a78d6; --s2: #eb6834; --s3: #1baf7a; --s4: #eda100; --s5: #e87ba4;
   --code-bg: #1e1f22; --code-text: #e6e4dc; --code-hl: rgba(235,104,52,.28);
   --shadow: 0 1px 2px rgba(0,0,0,.05), 0 4px 16px rgba(0,0,0,.05);
@@ -46,12 +47,13 @@
   --text: #f0efec;
   --text-2: #c3c2b7;
   --muted: #8e8d86;
-  --accent: #3987e5;
+  --accent: #4a93ea;   /* >= 4.5:1 on --surface, --bg and the lesson band */
   --accent-strong: #2f6fcc;
   --hot: #d95926;
   --ok: #199e70;
   --bad: #e66767;
   --violet: #9085e9;
+  --hot-text: #e8743f;
   --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500; --s5: #d55181;
   --code-bg: #0e0e0d; --code-hl: rgba(217,89,38,.32);
   --shadow: 0 1px 2px rgba(0,0,0,.4);
@@ -59,10 +61,13 @@
 * { box-sizing: border-box; }
 html { scroll-behavior: smooth; scroll-padding-top: 72px; }
 @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+.skip { position: fixed; left: 8px; top: -60px; z-index: 100; padding: 8px 14px; border-radius: 8px; background: var(--accent-strong); color: #fff; font-weight: 600; text-decoration: none; }
+.skip:focus { top: 8px; }
+main:focus { outline: none; }
 body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.6 var(--sans); }
 a { color: var(--accent); }
 code { font-family: var(--mono); font-size: .9em; background: var(--surface-2); padding: 1px 5px; border-radius: 4px; }
-h1, h2, h3 { line-height: 1.25; }
+h1, h2, h3 { line-height: 1.25; overflow-wrap: break-word; }
 h2 { font-size: 1.75rem; margin: 0 0 .25rem; }
 h3 { font-size: 1.15rem; margin: 1.6rem 0 .5rem; }
 
@@ -75,6 +80,14 @@ header.top {
 }
 header.top .brand { font-weight: 700; font-size: 1.05rem; margin-right: auto; }
 header.top label { font-size: .85rem; color: var(--text-2); display: flex; align-items: center; gap: 8px; }
+@media (max-width: 560px) {
+  header.top { gap: 8px; padding: 0 16px; }
+  header.top .brand { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: .95rem; }
+  header.top label { font-size: 0; gap: 6px; }
+  header.top label #speedVal { font-size: .85rem; }
+  header.top #speed { width: 72px !important; }
+  header.top #themeBtn { flex: none; white-space: nowrap; }
+}
 @media (max-width: 560px) {
   header.top { gap: 8px; padding: 0 16px; }
   header.top .brand { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: .95rem; }
@@ -120,7 +133,9 @@ main { background: color-mix(in srgb, var(--bg) 92%, #000 8%); }
   border-radius: 10px 10px 0 0; }
 .band-n { flex: none; font: 600 46px/1 var(--sans); color: var(--accent); min-width: 1ch; text-align: center; }
 .band-k { font-size: .8rem; font-weight: 600; letter-spacing: .03em; color: var(--accent); margin-bottom: 2px; }
-.band h2 { margin: 0; }
+.band h2 { margin: 0; overflow-wrap: anywhere; }
+.band > :last-child { min-width: 0; }
+select { max-width: 100%; }
 .endline { margin-top: 26px; padding-top: 8px; border-top: 1px solid var(--border); color: var(--muted); font-size: .85rem; text-align: center; }
 @media (max-width: 560px) {
   main { padding-left: 8px !important; padding-right: 8px !important; }
@@ -133,6 +148,13 @@ main { background: color-mix(in srgb, var(--bg) 92%, #000 8%); }
 .card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px; box-shadow: var(--shadow); min-width: 0; }
 .grid2 { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 16px; margin: 20px 0; align-items: start; }
 @media (max-width: 1050px) { .grid2 { grid-template-columns: 1fr; } }
+/* Narrow screens: the code panel goes above its demo card and stays pinned under the header while the
+   demo scrolls past, so the highlighted line and the demo are on screen together. */
+@media (max-width: 1050px) {
+  .grid2 > .code { order: -1; position: sticky; top: 64px; z-index: 5; max-height: 30vh;
+    box-shadow: 0 8px 18px -10px rgb(0 0 0 / .55); }
+}
+@media (max-width: 860px) { .grid2 > .code { top: 113px; } }
 .callout { border-left: 4px solid var(--accent); background: var(--surface); padding: 10px 16px; border-radius: 0 8px 8px 0; margin: 16px 0; }
 .callout.tip { border-color: var(--ok); }
 .callout.warn { border-color: var(--hot); }
@@ -154,6 +176,7 @@ input[type="text"], input[type="number"], select {
   font: .9rem var(--mono); padding: 7px 9px; border-radius: 8px; width: 84px;
   border: 1px solid var(--border); background: var(--surface); color: var(--text);
 }
+::placeholder { color: var(--muted); opacity: 1; }
 input:focus-visible, button:focus-visible, select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
 /* ---------- visual area ---------- */
@@ -204,9 +227,11 @@ input:focus-visible, button:focus-visible, select:focus-visible { outline: 2px s
 }
 .code .title { color: #8e8d86; font-size: 11px; padding: 0 14px 6px; text-transform: uppercase; letter-spacing: .08em; }
 .code .ln { display: flex; white-space: pre; padding: 0 14px 0 0; transition: background .2s; }
-.code .ln .no { width: 36px; flex: none; text-align: right; padding-right: 12px; color: #5f5e59; user-select: none; }
+.code .ln .no { width: 36px; flex: none; text-align: right; padding-right: 12px; color: #94938c; user-select: none; }
 .code .ln.hl { background: var(--code-hl); box-shadow: inset 3px 0 0 var(--hot); }
-.t-k { color: #c792ea; } .t-sf { color: #f78c6c; } .t-s { color: #c3e88d; } .t-c { color: #7f7e78; font-style: italic; } .t-n { color: #f9c859; } .t-d { color: #82aaff; }
+.code .ln.hl .no { color: var(--code-text); }
+.code:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.t-k { color: #c792ea; } .t-sf { color: #f78c6c; } .t-s { color: #c3e88d; } .t-c { color: #8e8d86; font-style: italic; } .t-n { color: #f9c859; } .t-d { color: #82aaff; }
 
 /* ---------- tables ---------- */
 table.cx { border-collapse: collapse; width: 100%; font-size: .92rem; margin: 10px 0; }
@@ -254,11 +279,13 @@ table.cx tbody tr:hover { background: var(--surface-2); }
 .scenario .answer.show { display: block; }
 .scenario select { width: 100%; font-family: var(--sans); }
 ol.ex li { margin-bottom: 6px; }
-footer { color: var(--muted); font-size: .85rem; padding: 32px 0; }
+footer { color: var(--text-2); font-size: .85rem; padding: 32px 0; }
+footer a { color: var(--text-2); } /* footer sits on the darker page, where --accent is below 4.5:1 */
 @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
 </style>
 </head>
 <body>
+<a class="skip" href="#main">Skip to content</a>
 <header class="top">
   <div class="brand">🧱 Intro to Data Structures</div>
   <label>Animation speed
@@ -270,7 +297,7 @@ footer { color: var(--muted); font-size: .85rem; padding: 32px 0; }
 
 <div class="layout">
 <nav class="side" id="nav" aria-label="Sections"></nav>
-<main>
+<main id="main" tabindex="-1">
 
 <script>
 /* ======================================================================
@@ -304,24 +331,37 @@ const DS = (() => {
 
   const reducedMotion = () => !!(window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches);
 
-  let speed = 1;
+  let speed = 1, paused = false;
   const sleep = ms => new Promise(r => setTimeout(r, ms));
-  // Pause between animation steps; scaled by the global speed slider.
-  const wait = (mult = 1) => sleep(650 * mult / speed);
+  // Pause between animation steps; scaled by the global speed slider. Holds while a demo is paused.
+  const wait = async (mult = 1) => { await sleep(650 * mult / speed); while (paused) await sleep(120); };
 
   // Run an async animation, disabling the section's buttons until it finishes.
+  // A ▶ button that starts a run turns into Pause / Resume until the run ends
+  // (add class "no-pause" to a ▶ button that starts something interactive, such as a game).
   async function run(root, fn) {
-    if (root.dataset.busy) return;
+    const trigger = window.event && window.event.currentTarget;
+    if (root.dataset.busy) {
+      if (trigger && trigger === root.pauseBtn) {
+        paused = !paused;
+        trigger.textContent = paused ? "▶ Resume" : "⏸ Pause";
+      }
+      return;
+    }
     root.dataset.busy = "1";
     // Only touch buttons that are currently enabled, so ones disabled for other
     // reasons stay disabled afterwards.
     const btns = [...root.querySelectorAll("button:not(.always)")].filter(b => !b.disabled);
     const focused = document.activeElement;
-    btns.forEach(b => (b.disabled = true));
+    const play = btns.includes(trigger) && trigger.textContent.trim().startsWith("▶") && !trigger.matches(".no-pause") ? trigger : null;
+    const playLabel = play && play.textContent;
+    if (play) { root.pauseBtn = play; play.textContent = "⏸ Pause"; }
+    btns.forEach(b => (b.disabled = b !== play));
     try { await fn(); }
     catch (e) { console.error(e); }
     finally {
       delete root.dataset.busy;
+      if (play) { play.textContent = playLabel; root.pauseBtn = null; paused = false; }
       btns.forEach(b => (b.disabled = false));
       // Disabling a focused button drops focus to <body>; give it back.
       const lost = !document.activeElement || document.activeElement === document.body;
@@ -351,6 +391,10 @@ const DS = (() => {
   function code(container, src, title) {
     const lines = src.replace(/^\n+|\s+$/g, "").split("\n");
     container.innerHTML = "";
+    // Focusable so keyboard users can scroll long or wide code
+    container.tabIndex = 0;
+    container.setAttribute("role", "region");
+    container.setAttribute("aria-label", title ? title + " code" : "Code");
     if (title) container.append(el("div", { class: "title" }, title));
     const rows = lines.map((t, i) => {
       const r = el("div", { class: "ln" }, el("span", { class: "no" }, String(i + 1)), el("span", { html: hlPy(t) || " " }));
@@ -462,7 +506,8 @@ document.getElementById("themeBtn").addEventListener("click", () => {
     #intro .pillars { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin: 18px 0 0; }
     #intro .pillar { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; }
     #intro .pillar .p-ico { font-size: 1.4rem; line-height: 1; }
-    #intro .pillar h3 { margin: 8px 0 4px; font-size: 1rem; }
+    #intro h2 { font-size: 1.15rem; margin: 1.6rem 0 .5rem; }
+    #intro .pillar h2 { margin: 8px 0 4px; font-size: 1rem; }
     #intro .pillar p { margin: 0; color: var(--text-2); font-size: .9rem; line-height: 1.45; }
     #intro .path { list-style: none; counter-reset: step; margin: 10px 0 0; padding: 0; display: grid; gap: 8px; }
     #intro .path li { counter-increment: step; display: grid; grid-template-columns: 26px minmax(0, 1fr); column-gap: 12px; align-items: start; }
@@ -475,9 +520,9 @@ document.getElementById("themeBtn").addEventListener("click", () => {
     @media (max-width: 700px) { #intro .pillars { grid-template-columns: minmax(0, 1fr); } }
   </style>
   <div class="pillars">
-    <div class="pillar"><div class="p-ico" aria-hidden="true">📘</div><h3>Theory</h3><p>The idea behind each structure, how its operations work step by step, Big-O costs, and when to choose it.</p></div>
-    <div class="pillar"><div class="p-ico" aria-hidden="true">🛠️</div><h3>Practice</h3><p>Real Python code with each line highlighted as it runs, interactive visualizers, and a quiz per lesson.</p></div>
-    <div class="pillar"><div class="p-ico" aria-hidden="true">🎓</div><h3>Certificate</h3><p>Score 80% or more on the final quiz to get a certificate with your name, ready to print or save as PDF.</p></div>
+    <div class="pillar"><div class="p-ico" aria-hidden="true">📘</div><h2>Theory</h2><p>The idea behind each structure, how its operations work step by step, Big-O costs, and when to choose it.</p></div>
+    <div class="pillar"><div class="p-ico" aria-hidden="true">🛠️</div><h2>Practice</h2><p>Real Python code with each line highlighted as it runs, interactive visualizers, and a quiz per lesson.</p></div>
+    <div class="pillar"><div class="p-ico" aria-hidden="true">🎓</div><h2>Certificate</h2><p>Score 80% or more on the final quiz to get a certificate with your name, ready to print or save as PDF.</p></div>
   </div>
   <ul class="facts" aria-label="Course facts">
     <li><b>5</b> lessons</li>
@@ -486,7 +531,7 @@ document.getElementById("themeBtn").addEventListener("click", () => {
     <li>Self-paced · works offline</li>
   </ul>
 
-  <h3>How the course works</h3>
+  <h2>How the course works</h2>
   <ol class="path">
     <li><b>Start with the Big-O primer</b><span>a short introduction to Big-O, a way to describe how the work grows as the data grows.</span></li>
     <li><b>Work through the 5 lessons in order</b><span>read the idea, run the visualizer, watch the code panel, then take the lesson quiz.</span></li>
@@ -496,7 +541,7 @@ document.getElementById("themeBtn").addEventListener("click", () => {
   <div class="callout tip"><b>Tip for each lesson:</b> before each animation step finishes, guess what will happen next. Use the <b>Animation speed</b> slider at the top to slow down tricky steps. There's no time limit, and you can retake any quiz.</div>
   <style>
     #intro .ckey { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; margin: 16px 0 0; }
-    #intro .ckey h3 { margin: 0 0 2px; font-size: 1rem; }
+    #intro .ckey h2 { margin: 0 0 2px; font-size: 1rem; }
     #intro .ckey > p { margin: 0 0 12px; color: var(--text-2); font-size: .92rem; }
     #intro .ckey ul { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 18px; }
     #intro .ckey li { display: flex; align-items: center; gap: 12px; }
@@ -506,7 +551,7 @@ document.getElementById("themeBtn").addEventListener("click", () => {
     #intro .ckey small { color: var(--text-2); font-size: .85rem; line-height: 1.35; display: block; }
   </style>
   <div class="ckey" role="group" aria-labelledby="ckeyTitle">
-    <h3 id="ckeyTitle">Colour key for the animations</h3>
+    <h2 id="ckeyTitle">Colour key for the animations</h2>
     <p>When you press a button in any section, the boxes change colour to show what the code is doing at that moment:</p>
     <ul>
       <li><span class="node" aria-hidden="true">7</span><span><b>Normal</b><small>An item sitting in the structure, not involved in the current step.</small></span></li>
@@ -537,7 +582,7 @@ document.getElementById("themeBtn").addEventListener("click", () => {
     <div id="bigoTableWrap" style="display:none"></div>
   </div>
   <div style="overflow-x:auto">
-  <table class="cx">
+  <div style="overflow-x:auto"><table class="cx">
     <thead><tr><th>Notation</th><th>Name</th><th>Intuition</th><th>Example</th><th>Steps for n = 1,000,000</th></tr></thead>
     <tbody>
       <tr><td><span class="big o1">O(1)</span></td><td>Constant</td><td>Same speed no matter how much data</td><td>Taking the top plate off a pile (a stack, Lesson 1)</td><td class="big">1</td></tr>
@@ -546,7 +591,7 @@ document.getElementById("themeBtn").addEventListener("click", () => {
       <tr><td><span class="big onlog">O(n log n)</span></td><td>Linearithmic</td><td>n times log n: typical of fast sorting methods</td><td>Sorting a list with a fast sorting method (not covered in this course)</td><td class="big">≈ 20,000,000</td></tr>
       <tr><td><span class="big on2">O(n²)</span></td><td>Quadratic</td><td>Compares every element with every other</td><td>Comparing every pair of people in a room to find two with the same birthday</td><td class="big">1,000,000,000,000</td></tr>
     </tbody>
-  </table>
+  </table></div>
   </div>
   <p><b>Where the numbers come from:</b> <b>log n</b> (here log base 2) is how many times you can halve n before you reach 1. 1,000,000 can be halved about 20 times (2<sup>20</sup> = 1,048,576), so O(log n) is about 20 steps, and O(n log n) is 1,000,000 × 20 = 20,000,000. O(n²) is 1,000,000 × 1,000,000.</p>
   <p>The <b>Log scale</b> button squeezes big numbers so each grid line is 10 times the one below it, letting all five curves fit on one chart.</p>
@@ -744,7 +789,7 @@ document.getElementById("themeBtn").addEventListener("click", () => {
           </div>
         </div>
       </div>
-      <div class="status"></div>
+      <div class="status" role="status"></div>
       <div class="log"></div>
     </div>
     <div class="code"></div>
@@ -1106,7 +1151,7 @@ def balanced(expr):
           <div class="q-stats" style="font:12px/1.7 var(--mono);color:var(--text-2);align-self:center"></div>
         </div>
       </div>
-      <div class="status"></div>
+      <div class="status" role="status"></div>
       <div class="log"></div>
     </div>
     <div class="code"></div>
@@ -1388,7 +1433,7 @@ def balanced(expr):
         <div class="sll-chain"></div>
         <div class="sll-vars"></div>
       </div>
-      <div class="status"></div>
+      <div class="status" role="status"></div>
       <div class="log"></div>
     </div>
     <div class="code"></div>
@@ -2047,7 +2092,7 @@ class SinglyLinkedList:
         <div class="row"><span class="lbl">output</span><div class="items out" style="display:contents"><span class="empty">run a traversal to fill this list</span></div></div>
         <div class="row qrow" hidden><span class="lbl">queue</span><div class="items q" style="display:contents"></div></div>
       </div>
-      <div class="status"></div>
+      <div class="status" role="status"></div>
       <div class="log"></div>
     </div>
     <div class="code"></div>
@@ -2723,7 +2768,7 @@ class BinarySearchTree:
     #hash .hchain .node { height: 34px; font-size: 13px; white-space: nowrap; }
     #hash .hempty { color: var(--muted); font: 12px var(--mono); }
     #hash .harrow { color: var(--muted); }
-    #hash .hcoll { flex: none; font: 600 11px var(--sans); color: var(--hot); border: 1px solid var(--hot); border-radius: 999px; padding: 1px 8px; white-space: nowrap; }
+    #hash .hcoll { flex: none; font: 600 11px var(--sans); color: var(--hot-text); border: 1px solid var(--hot); border-radius: 999px; padding: 1px 8px; white-space: nowrap; }
     #hash .shake { animation: hash-shake .4s; }
     @keyframes hash-shake { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-6px); } 75% { transform: translateX(6px); } }
   </style>
@@ -2765,7 +2810,7 @@ class BinarySearchTree:
         <div class="hpending"></div>
         <div class="hbuckets"></div>
       </div>
-      <div class="status"></div>
+      <div class="status" role="status"></div>
       <div class="log"></div>
     </div>
     <div class="code"></div>
